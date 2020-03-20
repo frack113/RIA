@@ -11,17 +11,16 @@ Actuellement
 - Liste des KB microsoft API
 
 Dependance
-import re
-from os import listdir,mkdir
-from os.path import isfile, join, exists
-import zipfile
-import tarfile
-import json
-import datetime
-import sqlite3
-import hashlib
-import requests
-import shutil
-from tqdm import tqdm
-from prompter import yesno
-import base64
+- re
+- os 
+- zipfile
+- tarfile
+- json
+- datetime
+- sqlite3
+- hashlib
+- requests
+- shutil
+- tqdm 
+- prompter 
+- base64
