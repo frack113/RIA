@@ -74,7 +74,7 @@ def Search_re(regex,obj):
         return ''
 
 def charge_cert():
-    monbul=certfr()
+    monbul=C_certfr()
     sql="DELETE FROM CERTFR_tmp;"
     mycur.execute(sql)  
     files = [f for f in listdir("certfr/") if isfile(join("certfr/", f))]
@@ -130,6 +130,7 @@ def charge_cert():
     """)#
 
 def charge_cve():
+    moncve=C_cve()
     sql="DELETE FROM CVE_tmp;"
     mycur.execute(sql)
     sql="DELETE FROM CVE_cpe_tmp;"
@@ -146,27 +147,21 @@ def charge_cve():
         cve_dict = json.loads(jsonfile.read())
         pbarcve.total=len(cve_dict['CVE_Items'])
         for cve in cve_dict['CVE_Items']:
+            moncve.reset()
             pbarcve.update(1)
-            cve_id=cve['cve']['CVE_data_meta']['ID']
+            moncve.id=cve['cve']['CVE_data_meta']['ID']
             if 'baseMetricV3' in cve['impact']:
-                cve_cvss3=cve['impact']['baseMetricV3']['cvssV3']['vectorString']
-                cve_cvss3base=cve['impact']['baseMetricV3']['cvssV3']['baseScore']
-            else:
-                cve_cvss3='NA'
-                cve_cvss3base=0
+                moncve.cvssV3=cve['impact']['baseMetricV3']['cvssV3']['vectorString']
+                moncve.cvssV3base=cve['impact']['baseMetricV3']['cvssV3']['baseScore']
             if 'baseMetricV2' in cve['impact']:
-                cve_cvss2=cve['impact']['baseMetricV2']['cvssV2']['vectorString']
-                cve_cvss2base=cve['impact']['baseMetricV2']['cvssV2']['baseScore']
-            else:
-                cve_cvss2='NA'
-                cve_cvss2base=0
-            cve_node=cve['configurations']['nodes']
-            cve_pdate=cve['publishedDate']
-            cve_ldate=cve['lastModifiedDate']
-            str_hkey=f"{cve_id}_{cve_cvss3}_{cve_cvss3base}_{cve_cvss2}_{cve_cvss2base}_{cve_pdate}_{cve_ldate}"
-            hkey=hashlib.sha1(str_hkey.encode()).hexdigest()
-            sql=f'INSERT INTO CVE_tmp VALUES("{hkey}","{cve_id}","{cve_cvss3}",{cve_cvss3base},"{cve_cvss2}",{cve_cvss2base},"{cve_pdate}","{cve_ldate}",1);'
+                moncve.cvssV2=cve['impact']['baseMetricV2']['cvssV2']['vectorString']
+                moncve.cvssV2base=cve['impact']['baseMetricV2']['cvssV2']['baseScore']
+            moncve.dateOrigne=cve['publishedDate']
+            moncve.dateUpdate=cve['lastModifiedDate']
+            moncve.set_crc()
+            sql=f'INSERT INTO CVE_tmp VALUES("{moncve.crc}","{moncve.id}","{moncve.cvssV3}",{moncve.cvssV3base},"{moncve.cvssV2}",{moncve.cvssV2base},"{moncve.dateOrigine}","{moncve.dateUpdate}",1);'
             mycur.execute(sql)
+            cve_node=cve['configurations']['nodes']
             if len(cve_node)>0:
                 conf=0
                 for cpelist in cve_node:
@@ -304,7 +299,7 @@ def Url_down(nom,rep,url):
 
 #revoie le fichier brut d'un CERTFR
 def Get_Certfr_file(nom):
-    cert=certfr()
+    cert=C_certfr()
     mycur.execute(f'SELECT file FROM CERTFR WHERE nom="{nom}";')
     cert.file=mycur.fetchone()[0]
     return cert.decode_file()
@@ -327,6 +322,7 @@ def Write_CERTFR(nom,annee):
 #  LE Script :)  #
 ##################
 credit()
+
 initBDD("RIA.db")
 if not exists("txt"):
     mkdir("txt")

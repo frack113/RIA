@@ -5,7 +5,7 @@ import base64
 #              CERTFR                   #
 # pour les bulletins                    #
 #########################################
-class certfr:
+class C_certfr:
     def __init__(self):
        self.nom=""
        self.obj=""
@@ -39,7 +39,7 @@ class certfr:
 #               CVE                     #
 # pour les CVE                          #
 #########################################
-class cve:
+class C_cve:
     def __init__(self):
         self.id=""
         self.cvssV3="NA"
@@ -63,13 +63,13 @@ class cve:
         self.crc=""
 
     def set_crc(self):
-        str_hkey=f"{self_id}_{self.cvssV3}_{self.cvssV3base}_{self.cvssV2}_{self.cvssV2base}_{self.dateOrigine}_{self.dateUpdate}"
+        str_hkey=f"{self.id}_{self.cvssV3}_{self.cvssV3base}_{self.cvssV2}_{self.cvssV2base}_{self.dateOrigine}_{self.dateUpdate}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
 
 #########################################
 #               CPE                     #
 # pour les CPE                          #
 #########################################
-class cpe:
+class C_cpe:
     def __init__(self):   
         pass
