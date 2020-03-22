@@ -1,3 +1,4 @@
+import hashlib
 import base64
 
 #########################################
@@ -40,4 +41,35 @@ class certfr:
 #########################################
 class cve:
     def __init__(self):
+        self.id=""
+        self.cvssV3="NA"
+        self.cvssV3base=0
+        self.cvssV2="NA"
+        self.cvssV2base=0
+        self.dateOrigine=""
+        self.dateUpdate=""
+        self.New=0
+        self.crc=""
+
+    def reset(self):
+        self.id=""
+        self.cvssV3="NA"
+        self.cvssV3base=0
+        self.cvssV2="NA"
+        self.cvssV2base=0
+        self.dateOrigine=""
+        self.dateUpdate=""
+        self.New=0
+        self.crc=""
+
+    def set_crc(self):
+        str_hkey=f"{self_id}_{self.cvssV3}_{self.cvssV3base}_{self.cvssV2}_{self.cvssV2base}_{self.dateOrigine}_{self.dateUpdate}"
+        self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
+
+#########################################
+#               CPE                     #
+# pour les CPE                          #
+#########################################
+class cpe:
+    def __init__(self):   
         pass
