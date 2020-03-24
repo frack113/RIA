@@ -71,5 +71,34 @@ class C_cve:
 # pour les CPE                          #
 #########################################
 class C_cpe:
-    def __init__(self):   
-        pass
+    def __init__(self):
+        self.id=""
+        self.cve=""
+        self.conf=0
+        self.operateur=""
+        self.vulnerable=""
+        self.cpe23Uri=""
+        self.versionStartExcluding=""
+        self.versionStartIncluding=""
+        self.versionEndExcluding=""
+        self.versionEndIncluding=""
+        self.New=0
+        self.crc=""
+
+    def reset(self):
+        self.id=""
+        self.cve=""
+        self.conf=0
+        self.operateur=""
+        self.vulnerable=""
+        self.cpe23Uri=""
+        self.versionStartExcluding=""
+        self.versionStartIncluding=""
+        self.versionEndExcluding=""
+        self.versionEndIncluding=""
+        self.New=0
+        self.crc=""
+
+    def set_crc(self):
+        str_hkey=f"{self.id}_{self.cve}_{self.conf}_{self.operateur}_{self.vulnerable}_{self.cpe23Uri}_{self.versionStartExcluding}_{self.versionStartIncluding}_{self.versionEndExcluding}_{self.versionEndIncluding}"
+        self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()

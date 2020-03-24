@@ -1,4 +1,5 @@
 import re
+import os
 from os import listdir,mkdir
 from os.path import isfile, join, exists
 import zipfile
@@ -10,11 +11,11 @@ import hashlib
 import requests
 import shutil
 from tqdm import tqdm
-from prompter import yesno
 import base64
 import logging
 
 from RIA_class import *
+from RIA_sql import *
 
 def credit():
     mon_credit="""
@@ -37,35 +38,11 @@ def credit():
  ./\\__/   \\__/\\,
  | /  \\___/  \\ |
  \\/     V     \\/
-
-
-        Lecture des bulletin CERTFR depuis archive rar
-        Lecture des cve depuis les json
-        Gestion en SQLITE
-        liste des KB microsoft API depuis 2016 
     
     """
     print(mon_credit)
 
-def initBDD(mom_bdd):
-    global myBD
-    global mycur
-    myBD=sqlite3.Connection(mom_bdd)
-    mycur=myBD.cursor()
-    mycur.executescript("""
-    PRAGMA journal_mode = 'OFF';
-    PRAGMA secure_delete = '0';
-    PRAGMA temp_store = '2';
-    CREATE TABLE IF NOT EXISTS URL_file (Nom text UNIQUE NOT NULL,date text,taille text);
-    CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
-    CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
-    CREATE TABLE IF NOT EXISTS CERTFR_cve (BULTIN text NOT NULL,CVE text);
-    CREATE TABLE IF NOT EXISTS CVE (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTEGER);
-    CREATE TABLE IF NOT EXISTS CVE_tmp (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTERGER);
-    CREATE TABLE IF NOT EXISTS CVE_cpe (Hkey TEXT UNIQUE,cve_id TEXT,conf INTERGER,ope TEXT,vuln TEXT,cpe TEXT,versionStartExcluding TEXT,versionStartIncluding,versionEndExcluding TEXT,versionEndIncluding TEXT,New INTEGER);
-    CREATE TABLE IF NOT EXISTS CVE_cpe_tmp (Hkey TEXT UNIQUE,cve_id TEXT,conf INTEGER,ope TEXT,vuln TEXT,cpe TEXT,versionStartExcluding TEXT,versionStartIncluding,versionEndExcluding TEXT,versionEndIncluding TEXT,New INTEGER);
-    """)
-    
+
 def Search_re(regex,obj):
     result=re.search(regex,obj)
     if result:
@@ -75,8 +52,8 @@ def Search_re(regex,obj):
 
 def charge_cert():
     monbul=C_certfr()
-    sql="DELETE FROM CERTFR_tmp;"
-    mycur.execute(sql)  
+    MaBdd.clean_tmp()
+ 
     files = [f for f in listdir("certfr/") if isfile(join("certfr/", f))]
     files.sort()
     pbar=tqdm(total=len(files), unit="file",ascii=True,desc="PARSE CERTFR")
@@ -91,12 +68,11 @@ def charge_cert():
                 bultin_list=[x.decode('utf-8') for x in bultin_tar]
                 bultin_avi=''.join(bultin_list)
                 bultin_avi=re.sub('\\x0c','',bultin_avi)
-                bultin_avi=re.sub('Page \d+ / \d+','',bultin_avi)
+                bultin_avi=re.sub('Page \d+ / \d+','',bultin_avi)            
                 #http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0985  en http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2003-0985
                 bultin_avi=bultin_avi.replace('?name=CAN-','?name=CVE-')
                 monbul.file=re.sub('\n\n','\n',bultin_avi)
-                #paris le {date}
-                monbul.dateOrigine=Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
+
                 #le nom du bulletin
                 monbul.nom=Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)  
                 #l'objet   du bulletin
@@ -105,6 +81,8 @@ def charge_cert():
                 datetmp=Search_re('Date de la première version\n*(\d{1,2} \w* \d{4})',monbul.file)
                 if len(datetmp)>1:
                     monbul.dateOrigine=datetmp
+                else:
+                    monbul.dateOrigine=Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
                 #date de modif
                 monbul.dateUpdate=Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)       
                 #les CVE
@@ -113,24 +91,20 @@ def charge_cert():
                     bul_cve=regex
                 if len(bul_cve)>0:
                     for nom_cve in bul_cve:
-                        mycur.execute(f'INSERT INTO CERTFR_CVE VALUES("{monbul.nom}","{nom_cve}");')
+                        MaBdd.write_certfr_cve(monbul.nom,nom_cve)
                 monbul.set_crc()
                 monbul.file=monbul.encode_file()
-                mycur.execute(f'INSERT INTO CERTFR_tmp VALUES("{monbul.crc}","{monbul.nom}","{monbul.obj}","{monbul.dateOrigine}","{monbul.dateUpdate}",0,"{monbul.file}");')
-    pbar.close()
+                MaBdd.write_certfr_tmp(monbul)
+                pbar.close()
     
     #mise a jour de la table
     print("Mise a jour de la table CERTFR")
-    mycur.executescript("""
-     UPDATE CERTFR SET New=0;
-     DELETE FROM CERTFR_tmp WHERE Hkey IN (SELECT Hkey FROM CERTFR);
-     UPDATE CERTFR_tmp SET New=1;
-     INSERT OR replace INTO CERTFR SELECT * FROM CERTFR_tmp;
-     DELETE FROM CERTFR_tmp; 
-    """)#
+    MaBdd.flush_tmp
+
 
 def charge_cve():
     moncve=C_cve()
+    moncpe=C_cpe()
     sql="DELETE FROM CVE_tmp;"
     mycur.execute(sql)
     sql="DELETE FROM CVE_cpe_tmp;"
@@ -170,53 +144,43 @@ def charge_cve():
                         opt,dict_cpe=cpelist
                         if dict_cpe=='cpe_match':
                             for cpe in cpelist[dict_cpe]:
-                                lecpe=cpe['cpe23Uri'].replace('"',"'")
-                                vuln=cpe['vulnerable']
+                                moncpe.reset()
+                                moncpe.cve=moncve.id
+                                moncpe.conf=conf
+                                moncpe.operateur=cpelist.get(opt)
+                                moncpe.vulnerable=cpe['vulnerable']
+                                moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
                                 if 'versionStartExcluding' in cpe:
-                                    VStartex=cpe['versionStartExcluding'].replace('"',"'")
-                                else:
-                                    VStartex=''
+                                    moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
                                 if 'versionStartIncluding' in cpe:
-                                    VStartin=cpe['versionStartIncluding'].replace('"',"'")
-                                else:
-                                     VStartin=''
+                                    moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
                                 if 'versionEndExcluding' in cpe:
-                                    VEndex=cpe['versionEndExcluding'].replace('"',"'")
-                                else:
-                                    VEndex=''
+                                    moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
                                 if 'versionEndIncluding' in cpe:
-                                    VEndin=cpe['versionEndIncluding'].replace('"',"'")
-                                else:
-                                    VEndin=''
-                                str_hkey=f"{cve_id}_{conf}_{cpelist.get(opt)}_{vuln}_{lecpe}_{VStartex}_{VStartin}_{VEndex}_{VEndin}"
-                                hkey=hashlib.sha1(str_hkey.encode()).hexdigest()
-                                sql=f'INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{hkey}","{cve_id}",{conf},"{cpelist.get(opt)}","{vuln}","{lecpe}","{VStartex}","{VStartin}","{VEndex}","{VEndin}",1);'
+                                    moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
+                                moncpe.set_crc()
+                                sql=f'INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{moncpe.crc}","{moncpe.cve}",{moncpe.conf},"{moncpe.operateur}","{moncpe.vulnerable}","{moncpe.cpe23uri}","{moncpe.versionStartExcluding}","{moncpe.versionStartIncluding}","{moncpe.versionEndExcluding}","{moncpe.versionEndIncluding}",1);'
                                 mycur.execute(sql)
                         else:
                             child_lst=cpelist[dict_cpe]
                             for child in child_lst:
                                 for cpe in child['cpe_match']:
-                                    lecpe=cpe['cpe23Uri'].replace('"',"'")
-                                    vuln=cpe['vulnerable']
+                                    moncpe.reset()
+                                    moncpe.cve=moncve.id
+                                    moncpe.conf=conf
+                                    moncpe.operateur=cpelist.get(opt)
+                                    moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
+                                    moncpe.vulnerable=cpe['vulnerable']
                                     if 'versionStartExcluding' in cpe:
-                                        VStartex=cpe['versionStartExcluding'].replace('"',"'")
-                                    else:
-                                        VStartex=''
+                                        moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
                                     if 'versionStartIncluding' in cpe:
-                                        VStartin=cpe['versionStartIncluding'].replace('"',"'")
-                                    else:
-                                        VStartin=''
+                                        moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
                                     if 'versionEndExcluding' in cpe:
-                                        VEndex=cpe['versionEndExcluding'].replace('"',"'")
-                                    else:
-                                        VEndex=''
+                                        moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
                                     if 'versionEndIncluding' in cpe:
-                                        VEndin=cpe['versionEndIncluding'].replace('"',"'")
-                                    else:
-                                        VEndin=''
-                                    str_hkey=f"{cve_id}_{conf}_{cpelist.get(opt)}_{vuln}_{lecpe}"
-                                    hkey=hashlib.sha1(str_hkey.encode()).hexdigest()
-                                    sql=f'INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{hkey}","{cve_id}",{conf},"{cpelist.get(opt)}","{vuln}","{lecpe}","{VStartex}","{VStartin}","{VEndex}","{VEndin}",1);'
+                                        moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
+                                    moncpe.set_crc()
+                                    sql=f'INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{moncpe.crc}","{moncpe.cve}",{moncpe.conf},"{moncpe.operateur}","{moncpe.vulnerable}","{moncpe.cpe23uri}","{moncpe.versionStartExcluding}","{moncpe.versionStartIncluding}","{moncpe.versionEndExcluding}","{moncpe.versionEndIncluding}",1);'
                                     mycur.execute(sql)
     pbar.close()
     pbarcve.close()
@@ -276,8 +240,7 @@ def MS_to_STR(nom_bultin):
 
 #Télécharge les fichiers si plus récent ou taille différents
 def Url_down(nom,rep,url):
-    mycur.execute(f'SELECT * FROM URL_file WHERE Nom="{nom}";')
-    info = mycur.fetchone()
+    info = MaBdd.get_url_info(nom)
     if info:
         r_file = requests.head(url)
         if r_file.headers['last-modified']==info[1] and r_file.headers['content-length']==info[2]:
@@ -294,7 +257,7 @@ def Url_down(nom,rep,url):
         file_taille=r_file.headers['content-length']
         with open(rep + filename, 'wb') as f:
             shutil.copyfileobj(r_file.raw, f)
-        mycur.execute(f'INSERT OR REPLACE INTO URL_file VALUES("{nom}","{file_date}","{file_taille}");')
+        MaBdd.set_url_info(r_file,file_date,file_taille)
     return download
 
 #revoie le fichier brut d'un CERTFR
@@ -322,8 +285,9 @@ def Write_CERTFR(nom,annee):
 #  LE Script :)  #
 ##################
 credit()
+global MaBdd  # Global ou pas global obligatoire ???
+MaBdd=C_sql()
 
-initBDD("RIA.db")
 if not exists("txt"):
     mkdir("txt")
 
