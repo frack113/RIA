@@ -52,8 +52,6 @@ def Search_re(regex,obj):
 
 def charge_cert():
     monbul=C_certfr()
-    MaBdd.clean_tmp()
- 
     files = [f for f in listdir("certfr/") if isfile(join("certfr/", f))]
     files.sort()
     pbar=tqdm(total=len(files), unit="file",ascii=True,desc="PARSE CERTFR")
@@ -94,22 +92,14 @@ def charge_cert():
                         MaBdd.write_certfr_cve(monbul.nom,nom_cve)
                 monbul.set_crc()
                 monbul.file=monbul.encode_file()
+                monbul.New=1
                 MaBdd.write_certfr_tmp(monbul)
                 pbar.close()
-    
-    #mise a jour de la table
-    print("Mise a jour de la table CERTFR")
-    MaBdd.flush_tmp
 
 
 def charge_cve():
     moncve=C_cve()
     moncpe=C_cpe()
-    sql="DELETE FROM CVE_tmp;"
-    mycur.execute(sql)
-    sql="DELETE FROM CVE_cpe_tmp;"
-    mycur.execute(sql)
-
     files = [f for f in listdir("nvd/") if isfile(join("nvd/", f))]
     files.sort()
     pbar = tqdm(total=len(files), unit="file",ascii=True,desc="PARSE JSON")
@@ -133,8 +123,8 @@ def charge_cve():
             moncve.dateOrigne=cve['publishedDate']
             moncve.dateUpdate=cve['lastModifiedDate']
             moncve.set_crc()
-            sql=f'INSERT INTO CVE_tmp VALUES("{moncve.crc}","{moncve.id}","{moncve.cvssV3}",{moncve.cvssV3base},"{moncve.cvssV2}",{moncve.cvssV2base},"{moncve.dateOrigine}","{moncve.dateUpdate}",1);'
-            mycur.execute(sql)
+            moncve.New=1
+            MaBdd.write_cve_tmp(moncve)
             cve_node=cve['configurations']['nodes']
             if len(cve_node)>0:
                 conf=0
@@ -159,8 +149,8 @@ def charge_cve():
                                 if 'versionEndIncluding' in cpe:
                                     moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
                                 moncpe.set_crc()
-                                sql=f'INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{moncpe.crc}","{moncpe.cve}",{moncpe.conf},"{moncpe.operateur}","{moncpe.vulnerable}","{moncpe.cpe23uri}","{moncpe.versionStartExcluding}","{moncpe.versionStartIncluding}","{moncpe.versionEndExcluding}","{moncpe.versionEndIncluding}",1);'
-                                mycur.execute(sql)
+                                moncpe.New=1
+                                MaBdd.write_cpe_tmp(moncpe)
                         else:
                             child_lst=cpelist[dict_cpe]
                             for child in child_lst:
@@ -180,49 +170,33 @@ def charge_cve():
                                     if 'versionEndIncluding' in cpe:
                                         moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
                                     moncpe.set_crc()
-                                    sql=f'INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{moncpe.crc}","{moncpe.cve}",{moncpe.conf},"{moncpe.operateur}","{moncpe.vulnerable}","{moncpe.cpe23uri}","{moncpe.versionStartExcluding}","{moncpe.versionStartIncluding}","{moncpe.versionEndExcluding}","{moncpe.versionEndIncluding}",1);'
-                                    mycur.execute(sql)
+                                    moncpe.New=1
+                                    MaBdd.write_cpe_tmp(moncpe)
     pbar.close()
     pbarcve.close()
-    print ("Mise a jour de la table CVE")
-    mycur.executescript("""
-     UPDATE CVE SET New=0;
-     DELETE FROM CVE_tmp WHERE hkey in (SELECT DISTINCT Hkey FROM CVE);
-     INSERT OR replace INTO CVE SELECT * from CVE_tmp;
-     DELETE FROM CVE_tmp;
-    """)
-    print ("Mise a jour de la table CPE")
-    mycur.executescript("""
-     UPDATE CVE_cpe SET New=0;
-     DELETE FROM CVE_cpe_tmp WHERE hkey in (SELECT DISTINCT Hkey FROM CVE_cpe);
-     INSERT OR replace INTO CVE_cpe SELECT * from CVE_cpe_tmp;
-     DELETE FROM CVE_cpe_tmp;
-    """)
+
 
 #Une jolie sortie formater des info CERTFR
 def CERT_to_STR(nom_bultin):
     str_info=f'/------------------------\\\n|{nom_bultin:^24}|\n\\________________________/\n'
-    mycur.execute(f"SELECT * FROM CVE WHERE cve_id IN (SELECT CVE FROM CERTFR_cve WHERE BULTIN='{nom_bultin}') ORDER BY cve_id;")
-    allcve=mycur.fetchall()
+    allcve=get_all_cve_certfr(mon_bultin)
     if allcve:
         str_info+="CVE"+" "*17+"|CVSS v3"+" "*38+"|Base V3|CVSS V2"+" "*28+"|Base V2| Pubication | Modification\n"
         for mycve in allcve:
-            str_info+=f"{mycve[1]:20}|{mycve[2]:45}|{mycve[3]:^7}|{mycve[4]:35}|{mycve[5]:^7}|{mycve[6][:10]:^12}|{mycve[7][:10]:^12}\n"
+            str_info+=f"{mycve.id:20}|{mycve.cvssV3:45}|{mycve.cvssV3base:^7}|{mycve.cvssV2:35}|{mycve.cvssV2base:^7}|{mycve.dateOrigine[:10]:^12}|{mycve.dateUpdate[:10]:^12}\n"
         str_info+="\n"
-    mycur.execute(f"SELECT max(length(cpe)) FROM CVE_cpe WHERE cve_id in (SELECT CVE FROM CERTFR_cve WHERE BULTIN='{nom_bultin}');")
-    cpe_max=mycur.fetchone()
-    mycur.execute(f"SELECT DISTINCT * FROM CVE_cpe WHERE cve_id in (SELECT CVE FROM CERTFR_cve WHERE BULTIN='{nom_bultin}') ORDER BY cve_id,conf ASC,vuln DESC;")
-    allcve=mycur.fetchall()
-    if allcve:
-       str_info+="\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max[0]-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl\n" 
-       test=allcve[0][1]+'+'+str(allcve[0][2])+' '+allcve[0][3]
+    cpe_max=MaBdd.get_max_lg_uri_cpe(mon_bultin)
+    allcpe=get_all_cpe_certfr(nom_bultin)
+    if allcpe:
+       str_info+="\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl\n" 
+       test=allcve[0].cve+'+'+str(allcve[0].conf)+' '+allcve[0].vulnerable
        for cpe in allcve:
-           testlg=cpe[1]+' '+str(cpe[2])+' '+cpe[3]
+           testlg=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
            if test==testlg:
-                str_info+="\t"+" "*32+f"{cpe[4]:^7}|{cpe[5]:{cpe_max[0]}}|{cpe[6]:12}|{cpe[7]:12}|{cpe[8]:12}|{cpe[9]:12}\n"
+                str_info+="\t"+" "*32+f"{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}\n"
            else:
-                str_info+=f"\t{cpe[1]:^20}|{cpe[2]:^4}|{cpe[3]:^5}|{cpe[4]:^7}|{cpe[5]:{cpe_max[0]}}|{cpe[6]:12}|{cpe[7]:12}|{cpe[8]:12}|{cpe[9]:12}\n"
-                test=cpe[1]+' '+str(cpe[2])+' '+cpe[3]
+                str_info+=f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}\n"
+                test=cve.cve+'+'+str(cve.conf)+' '+cve.vulnerable
     str_info+="\n"
     return str_info
 
@@ -262,11 +236,8 @@ def Url_down(nom,rep,url):
 
 #revoie le fichier brut d'un CERTFR
 def Get_Certfr_file(nom):
-    cert=C_certfr()
-    mycur.execute(f'SELECT file FROM CERTFR WHERE nom="{nom}";')
-    cert.file=mycur.fetchone()[0]
+    cert=MaBdd.get_certfr(nom)
     return cert.decode_file()
-
 
 #Ecrit un bultin
 def Write_CERTFR(nom,annee):
@@ -277,7 +248,7 @@ def Write_CERTFR(nom,annee):
     file.writelines(bultin_avi+'\n')
     file.writelines('\n-------------- RIA By HBT --------------\n')
     file.writelines(CERT_to_STR(nom))
-    file.writelines(MS_to_STR(nom))
+    #file.writelines(MS_to_STR(nom))
     file.close()
 
 
@@ -314,29 +285,18 @@ for anne in range(2000,year +1):
 pbar.close()
 
 if mise_a_jour:
+    MaBdd.clean_tmp()
     charge_cert()
     charge_cve()
-    print ("Vérification des mise à jour CPE ou CVE")
-    mycur.executescript("""
-     UPDATE CVE SET New=1 WHERE cve_id IN (select cve_id FROM CVE_cpe where new=1);
-     INSERT INTO CVE_tmp SELECT * FROM CVE WHERE New=1;
-     UPDATE CERTFR SET new=1 WHERE nom IN (SELECT DISTINCT BULTIN FROM CERTFR_cve JOIN CVE_tmp WHERE CERTFR_cve.CVE=CVE_tmp.cve_id);
-     DELETE FROM CVE_tmp;
-    """)
-    #on ecrit le tout :)
+    print ("Vérification des mise à jour")    
+    MaBdd.flush_tmp()
     print ("Nettoyage et Sauvegarde sur le disque")
-    mycur.execute('VACUUM "main";')
-    myBD.commit()
+    MaBdd.save_db()
 else:
-    mycur.executescript("""
-     UPDATE CERTFR SET New=0;
-     UPDATE CVE SET New=0;
-     UPDATE CVE_cpe SET New=0;
-    """)
+    MaBdd.clean_new()
 
 print("Traite les mises a jour de buletin")
-mycur.execute("SELECT Nom FROM CERTFR WHERE New=1;")
-rows = mycur.fetchall()
+rows=MaBdd.get_all_new_certfr()
 logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 pbar = tqdm(total=len(rows),ascii=True,desc="Bultin")
 for bul in rows:
@@ -346,14 +306,7 @@ for bul in rows:
     Write_CERTFR(bul[0],gg.group('an'))
 pbar.close()
 
-
-mycur.executescript("""
-  DROP TABLE IF EXISTS CVE_BULTIN;
-  CREATE TABLE CVE_BULTIN AS SELECT CVE, group_concat(DISTINCT BULTIN) FROM CERTFR_cve GROUP BY CVE;
-  ALTER TABLE CVE_BULTIN RENAME COLUMN 'group_concat(DISTINCT BULTIN)' TO CERTFR;
-""")
-mycur.execute('SELECT * FROM CVE_BULTIN;')
-rows = mycur.fetchall()
+rows = MaBdd.get_all_certfr_by_cve()
 fiche=open("txt/CVE_CERTFR.txt",'w', encoding='utf-8')
 pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="CVE_CERTFR")
 for bul in rows:
@@ -364,7 +317,6 @@ fiche.close()
 pbar.close()
 
 
-myBD.commit()
-myBD.close()
+MaBdd.close_db()
 
 print("Bye Bye")
