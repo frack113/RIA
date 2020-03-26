@@ -6,8 +6,8 @@ import zipfile
 import tarfile
 import json
 import datetime
-import sqlite3
-import hashlib
+#import sqlite3
+#import hashlib
 import requests
 import shutil
 from tqdm import tqdm
@@ -61,8 +61,10 @@ def charge_cert(file):
             bultin_tar=archive.extractfile(nom).readlines()
             bultin_list=[x.decode('utf-8') for x in bultin_tar]
             bultin_avi=''.join(bultin_list)
+            addre='\n\nSecrétariat général de la défense et de la sécurité nationale – ANSSI – CERT-FR\n\n51, bd de La Tour-Maubourg\n75700 Paris 07 SP\n\nTél.:  +33 1 71 75 84 68\nFax:  +33 1 84 82 40 70\n\nWeb:  https://www.cert.ssi.gouv.fr\nMél:  cert-fr.cossi@ssi.gouv.fr\n'
+            bultin_avi=bultin_avi.replace(addre,'')
             bultin_avi=re.sub('\\x0c','',bultin_avi)
-            bultin_avi=re.sub('Page \d+ / \d+','',bultin_avi)            
+            bultin_avi=re.sub('\nPage \d+ / \d+\n','',bultin_avi)            
             #http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0985  en http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2003-0985
             bultin_avi=bultin_avi.replace('?name=CAN-','?name=CVE-')
             monbul.file=re.sub('\n\n','\n',bultin_avi)
@@ -288,8 +290,8 @@ if maj:
 else:
     MaBdd.clean_new()
 
-MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
-
+#Pour verifier la sortie sans avoir de mise a jour :)
+#MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
 
 print("Traite les mises a jour de buletin")
 rows=MaBdd.get_all_new_certfr()
@@ -311,6 +313,15 @@ for bul in rows:
 fiche.close()
 pbar.close()
 
+rows = MaBdd.get_all_orphan()
+fiche=open("txt/Orphan.txt",'w', encoding='utf-8')
+pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="CVE_CERTFR")
+for bul in rows:
+    pbar.update(1)
+    str_bul=f"{bul[0]:^10}:{bul[1]}\n"
+    fiche.writelines(str_bul)
+fiche.close()
+pbar.close()
 
 MaBdd.close_db()
 

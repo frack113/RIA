@@ -180,5 +180,6 @@ class C_sql:
         self.moncur.execute('SELECT * FROM CVE_BULTIN;')
         return self.moncur.fetchall()
 
-
-        
+    def get_all_orphan(self):
+        self.moncur.execute("SELECT Nom,Obj FROM CERTFR WHERE Nom NOT IN (SELECT DISTINCT BULTIN FROM CERTFR_cve);")
+        return self.moncur.fetchall()

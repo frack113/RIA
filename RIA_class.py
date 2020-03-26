@@ -11,6 +11,7 @@ class C_certfr:
        self.obj=""
        self.dateOrigine=""
        self.dateUpdate=""
+       self.ref=[]
        self.New=0
        self.file=""
        self.crc=""
@@ -26,6 +27,7 @@ class C_certfr:
        self.obj=""
        self.dateOrigine=""
        self.dateUpdate=""
+       self.ref=[]
        self.New=0
        self.file=""
        self.crc=""
