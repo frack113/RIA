@@ -64,7 +64,9 @@ def charge_cert(file):
             addre='\n\nSecrétariat général de la défense et de la sécurité nationale – ANSSI – CERT-FR\n\n51, bd de La Tour-Maubourg\n75700 Paris 07 SP\n\nTél.:  +33 1 71 75 84 68\nFax:  +33 1 84 82 40 70\n\nWeb:  https://www.cert.ssi.gouv.fr\nMél:  cert-fr.cossi@ssi.gouv.fr\n'
             bultin_avi=bultin_avi.replace(addre,'')
             bultin_avi=re.sub('\\x0c','',bultin_avi)
-            bultin_avi=re.sub('\nPage \d+ / \d+\n','',bultin_avi)            
+            bultin_avi=re.sub('\nPage \d+ / \d+\n','',bultin_avi)
+            monbul.link=re.findall(r'http[s]?://.*',bultin_avi)
+            monbul.encode_link()
             #http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0985  en http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2003-0985
             bultin_avi=bultin_avi.replace('?name=CAN-','?name=CVE-')
             monbul.file=re.sub('\n\n','\n',bultin_avi)
@@ -243,14 +245,25 @@ def Write_CERTFR(nom,annee):
 ##################
 logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.info('Lancement du script')
+
 credit()
+
+if os.path.exists('RIA.db'):
+    logging.info('RIA.db ok')
+else:
+    dest = shutil.copyfile('RIA_init.db','RIA.db')
 
 MaBdd=C_sql()
 
 print("Mise a jour info Microsoft")
 Ksoft=C_mskb(MaBdd)
-#Ksoft.update_all_info()
-
+if os.path.exists('RIA_mskb.key'):
+    Ksoft.update_all_info()
+    MaBdd.save_db()
+else:
+    print("Manque le fichier RIA_mskb.key")
+    logging.warning('Pas de key api MICROSOFT')
+    
 if not exists("txt"):
     mkdir("txt")
 

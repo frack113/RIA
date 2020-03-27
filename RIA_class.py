@@ -11,17 +11,29 @@ class C_certfr:
        self.obj=""
        self.dateOrigine=""
        self.dateUpdate=""
-       self.ref=[]
        self.New=0
        self.file=""
        self.crc=""
+       self.link=[]
 
     def decode_file(self):
         return base64.b64decode(self.file).decode()
     
     def encode_file(self):
         return base64.b64encode(self.file.encode()).decode()
-    
+
+    def encode_link(self):
+        hyrule=[]
+        for zelda in self.link:
+            hyrule.append(base64.b64encode(zelda.encode()).decode())
+        self.link=hyrule
+        
+    def decode_link(self):
+        hyrule=[]
+        for zelda in self.link:
+            hyrule.append(base64.b64decode(zelda).decode())
+        self.link=hyrule
+        
     def reset(self):
        self.nom=""
        self.obj=""
@@ -31,6 +43,7 @@ class C_certfr:
        self.New=0
        self.file=""
        self.crc=""
+       self.link=[]
 
     def set_crc(self):
         str_hkey=f"{self.nom}_{self.dateOrigine}_{self.dateUpdate}"
