@@ -193,7 +193,7 @@ class C_sql:
     def get_all_cpe_uri(self,uri):
         all_cpe=[]
         moncpe=C_cpe()
-        self.moncur.execute(f'SELECT DISTINCT * FROM CVE_cpe WHERE cpe LIKE "%{uri}%" ORDER BY cve_id;')
+        self.moncur.execute(f'SELECT * FROM CVE_cpe WHERE cve_id IN (SELECT DISTINCT cve_id FROM CVE_cpe WHERE cpe LIKE "%{uri}%") ORDER BY cve_id')
         rows=self.moncur.fetchall()
         if rows:
             for row in rows:

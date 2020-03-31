@@ -376,7 +376,7 @@ else:
     MaBdd.clean_new()
 
 #Pour verifier la sortie sans avoir de mise a jour :)
-MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
+#MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
 
 print("Traite les mises a jour de buletin")
 rows=MaBdd.get_all_new_certfr()
@@ -410,6 +410,7 @@ pbar.close()
 
 
 URI_to_FILE("Wireshark","Wireshark:Wireshark")
+URI_to_FILE("Drupal","drupal:drupal")
 
 MaBdd.close_db()
 
