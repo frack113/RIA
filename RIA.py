@@ -6,17 +6,16 @@ import zipfile
 import tarfile
 import json
 import datetime
-#import sqlite3
-#import hashlib
 import requests
 import shutil
 from tqdm import tqdm
-import base64
+#import base64
 import logging
 
 from RIA_class import *
 from RIA_sql import *
 from RIA_mskb import *
+from RIA_wrapper import *
 
 def credit():
     mon_credit="""
@@ -65,8 +64,7 @@ def charge_cert(file):
             bultin_avi=bultin_avi.replace(addre,'')
             bultin_avi=re.sub('\\x0c','',bultin_avi)
             bultin_avi=re.sub('\nPage \d+ / \d+\n','',bultin_avi)
-            monbul.link=re.findall(r'http[s]?://.*',bultin_avi)
-            monbul.encode_link()
+            monbul.link=re.findall(r'http[s]?://[^"\n]*',bultin_avi)
             #http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0985  en http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2003-0985
             bultin_avi=bultin_avi.replace('?name=CAN-','?name=CVE-')
             monbul.file=re.sub('\n\n','\n',bultin_avi)
@@ -99,7 +97,7 @@ def charge_cert(file):
 def charge_cve(file):
     moncve=C_cve()
     moncpe=C_cpe()
-    pbarcve=tqdm(total=1,ascii=True,unit="node",desc="PARSE CVE")
+    pbarcve=tqdm(total=1,ascii=True,unit="node",desc=file)
     archive = zipfile.ZipFile(join("nvd/", file), 'r')
     jsonfile = archive.open(archive.namelist()[0])
     cve_dict = json.loads(jsonfile.read())
@@ -114,7 +112,7 @@ def charge_cve(file):
          if 'baseMetricV2' in cve['impact']:
              moncve.cvssV2=cve['impact']['baseMetricV2']['cvssV2']['vectorString']
              moncve.cvssV2base=cve['impact']['baseMetricV2']['cvssV2']['baseScore']
-         moncve.dateOrigne=cve['publishedDate']
+         moncve.dateOrigine=cve['publishedDate']
          moncve.dateUpdate=cve['lastModifiedDate']
          moncve.set_crc()
          moncve.New=1
@@ -170,39 +168,37 @@ def charge_cve(file):
 
 
 #Une jolie sortie formater des info CERTFR
-def CERT_to_STR(Nom):
-    str_info=f'/------------------------\\\n|{Nom:^24}|\n\\________________________/\n'
+def CERT_to_STR(Nom,tab):
     allcve=MaBdd.get_all_cve_certfr(Nom)
     if allcve:
-        str_info+="CVE"+" "*17+"|CVSS v3"+" "*38+"|Base V3|CVSS V2"+" "*28+"|Base V2| Pubication | Modification\n"
+        tab.append("CVE"+" "*17+"|CVSS v3"+" "*38+"|Base V3|CVSS V2"+" "*28+"|Base V2| Pubication | Modification")
         for mycve in allcve:
-            str_info+=f"{mycve.id:20}|{mycve.cvssV3:45}|{mycve.cvssV3base:^7}|{mycve.cvssV2:35}|{mycve.cvssV2base:^7}|{mycve.dateOrigine[:10]:^12}|{mycve.dateUpdate[:10]:^12}\n"
-        str_info+="\n"
+            tab.append(f"{mycve.id:20}|{mycve.cvssV3:45}|{mycve.cvssV3base:^7}|{mycve.cvssV2:35}|{mycve.cvssV2base:^7}|{mycve.dateOrigine[:10]:^12}|{mycve.dateUpdate[:10]:^12}")
+        tab.append('')
     cpe_max=MaBdd.get_max_lg_uri_cpe(Nom)
     allcpe=MaBdd.get_all_cpe_certfr(Nom)
     if allcpe:
-        str_info+="\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl\n" 
-        test=allcpe[0].cve+'+'+str(allcpe[0].conf)+' '+allcpe[0].vulnerable
+        tab.append("\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl" )
+        test=allcpe[0].cve+'_'+str(allcpe[0].conf)+' '+allcpe[0].vulnerable
         for cpe in allcpe:
             testlg=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
             if test==testlg:
-                str_info+="\t"+" "*32+f"{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}\n"
+                tab.append("\t"+" "*32+f"{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
             else:
-                str_info+=f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}\n"
-                test=cpe.cve+'+'+str(cpe.conf)+' '+cpe.vulnerable
-    str_info+="\n"
-    return str_info
+                tab.append(f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
+                test=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
+    tab.append('')
+
 
 #les info Microsoft
-def MS_to_STR(Nom):
-    str_info=''
+def MS_to_STR(Nom,tab):
     allcve=Ksoft.get_info_certfr(Nom)
     if allcve:
-        str_info+='Microsoft info\n'
-        str_info+="CVE"+" "*17+"|PRODUIT"+" "*53+"|KB"+" "*13+"|URL|Type\n"
+        tab.append('Microsoft info')
+        tab.append("CVE"+" "*17+"|PRODUIT"+" "*53+"|KB"+" "*13+"|URL|Type")
         for row in allcve:
-            str_info+=f"{row[0]:^20}|{row[1]:60}|{row[2]:^15}|{row[3]:^15}|{row[4]}\n"
-    return str_info
+            tab.append(f"{row[0]:^20}|{row[1]:60}|{row[2]:^15}|{row[3]:^15}|{row[4]}")
+
 
 #Télécharge les fichiers si plus récent ou taille différents
 def Url_down(nom,rep,url,scr):
@@ -228,23 +224,57 @@ def Url_down(nom,rep,url,scr):
 
 #Ecrit un bultin
 def Write_CERTFR(nom,annee):
+    reponse=[]
     cert=MaBdd.get_certfr(nom)
     if not exists(f"txt/{annee}"):
         mkdir(f"txt/{annee}")   
     file=open(f"txt/{annee}/{nom}.txt",'w',encoding='utf-8')
     bultin_avi=cert.decode_file()
-    file.writelines(bultin_avi+'\n')
-    file.writelines('\n-------------- RIA By HBT --------------\n')
-    file.writelines(CERT_to_STR(nom))
-    file.writelines(MS_to_STR(nom))
+    reponse.append(bultin_avi)
+    reponse.append('----------------------------------------')
+    reponse.append('-------------- RIA By HBT --------------')
+    reponse.append('----------------------------------------')
+    CERT_to_STR(nom,reponse)
+    MS_to_STR(nom,reponse)
+    file.writelines('\n'.join(reponse))
     file.close()
 
+#A bosser
+def URI_to_FILE(Nom,uri):
+    tab=[]
+    certs=MaBdd.get_orphan_by_obj(Nom)
+    if certs:
+        for cert in certs:
+            tab.append(cert[0]+' : '+cert[1])
+    tab.append('Les CVE')
+    allcpe=MaBdd.get_all_cpe_uri(uri)
+    cpe_max=50
+    if allcpe:
+        tab.append("\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl" )
+        test=allcpe[0].cve+'_'+str(allcpe[0].conf)+' '+allcpe[0].vulnerable
+        for cpe in allcpe:
+            testlg=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
+            if test==testlg:
+                tab.append("\t"+" "*32+f"{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
+            else:
+                tab.append(f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
+                test=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
+    file=file=open(f"txt/{Nom}.txt",'w',encoding='utf-8')    
+    file.writelines('\n'.join(tab))
+    file.close()
+    
 
 ##################
 #  LE Script :)  #
 ##################
 logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.info('Lancement du script')
+
+today=datetime.datetime.now().strftime("%Y%m%d")
+
+if not exists("txt"):
+    mkdir("txt")
+    logging.info('manque le repertoire de sortie txt')
 
 credit()
 
@@ -255,18 +285,60 @@ else:
 
 MaBdd=C_sql()
 
-print("Mise a jour info Microsoft")
+if os.path.exists('RIA_mogs.txt'):
+    logging.info('Les mogs sont la')
+    file=open('RIA_mogs.txt','r')
+    lignes=file.read().splitlines()
+    for ligne in lignes:
+        info=ligne.split(";")
+        MaBdd.write_certfr_cve(info[0],info[1])
+
+
+print("Mise a jour info API Microsoft")
 Ksoft=C_mskb(MaBdd)
 if os.path.exists('RIA_mskb.key'):
-    Ksoft.update_all_info()
-    MaBdd.save_db()
+    if MaBdd.get_Info_date("Microsoft")==today:
+        print ("Déjà fait aujourd'hui")
+    else:
+        Ksoft.update_all_info()
+        MaBdd.set_Info_date("Microsoft",today)    
 else:
     print("Manque le fichier RIA_mskb.key")
     logging.warning('Pas de key api MICROSOFT')
     
-if not exists("txt"):
-    mkdir("txt")
+print("Mise a jour info Wrapper")
+Wrapper=C_wrapper(MaBdd)
 
+print("Check Gitlab")
+if MaBdd.get_Info_date("Gitlab")== today:
+    print ("Déjà fait aujourd'hui")
+else:
+    Wrapper.check_Gitlab()
+    MaBdd.set_Info_date("Gitlab",today)
+
+print("Check Ubuntu")
+if MaBdd.get_Info_date("Ubuntu")== today:
+    print ("Déjà fait aujourd'hui")
+else:
+    Wrapper.check_Ubuntu()
+    MaBdd.set_Info_date("Ubuntu",today)
+
+print("Check Kaspersky")
+if MaBdd.get_Info_date("Kaspersky")== today:
+    print ("Déjà fait aujourd'hui")
+else:
+    Wrapper.check_Kaspersky()
+    MaBdd.set_Info_date("Kaspersky",today)
+
+print("Check Xen")
+if MaBdd.get_Info_date("Xen")== today:
+    print ("Déjà fait aujourd'hui")
+else:
+    Wrapper.check_Xen()
+    MaBdd.set_Info_date("Xen",today)
+
+Wrapper.Flush_cve()
+MaBdd.save_db()
 
 print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")
 MaBdd.write_sc("UPDATE URL_file SET New=0;")
@@ -304,7 +376,7 @@ else:
     MaBdd.clean_new()
 
 #Pour verifier la sortie sans avoir de mise a jour :)
-#MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
+MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
 
 print("Traite les mises a jour de buletin")
 rows=MaBdd.get_all_new_certfr()
@@ -328,13 +400,16 @@ pbar.close()
 
 rows = MaBdd.get_all_orphan()
 fiche=open("txt/Orphan.txt",'w', encoding='utf-8')
-pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="CVE_CERTFR")
+pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="Orphan")
 for bul in rows:
     pbar.update(1)
     str_bul=f"{bul[0]:^10}:{bul[1]}\n"
     fiche.writelines(str_bul)
 fiche.close()
 pbar.close()
+
+
+URI_to_FILE("Wireshark","Wireshark:Wireshark")
 
 MaBdd.close_db()
 

@@ -10,9 +10,11 @@ class C_sql:
           PRAGMA journal_mode = 'OFF';
           PRAGMA secure_delete = '0';
           PRAGMA temp_store = '2';
+          CREATE TABLE IF NOT EXISTS Info (Quoi TEXT UNIQUE,Date TEXT);
           CREATE TABLE IF NOT EXISTS URL_file (Nom text UNIQUE NOT NULL,date text,taille text,source text,New integer);
-          CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB,link TEXT);
-          CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB,link TEXT);
+          CREATE TABLE IF NOT EXISTS CERTFR_Url (Nom TEXT,Url TEXT);          
+          CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
+          CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
           CREATE TABLE IF NOT EXISTS CERTFR_cve (Hkey TEXT UNIQUE,BULTIN text NOT NULL,CVE text);
           CREATE TABLE IF NOT EXISTS CVE (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTEGER);
           CREATE TABLE IF NOT EXISTS CVE_tmp (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTERGER);
@@ -21,14 +23,25 @@ class C_sql:
         """)
         
     def close_db(self):
+        self.moncur.execute('PRAGMA integrity_check;')
         self.moncur.execute('VACUUM "main";')
         self.Localdb.commit()
         self.Localdb.close()
         
     def save_db(self):
-        self.moncur.execute('VACUUM "main";')
         self.Localdb.commit()
 
+    def get_Info_date(self,quoi):
+        self.moncur.execute(f'SELECT Date FROM Info WHERE Quoi="{quoi}";')
+        row=self.moncur.fetchone()
+        if row:
+            return row[0]
+        else:
+            return ""
+    
+    def set_Info_date(self,quoi,date):
+        self.moncur.execute(f'INSERT OR REPLACE INTO Info VALUES("{quoi}","{date}");')
+    
     def clean_tmp(self):
         self.moncur.executescript("""
          DELETE FROM CERTFR_tmp;
@@ -42,17 +55,19 @@ class C_sql:
          UPDATE CVE SET New=0;
          UPDATE CVE_cpe SET New=0;
         """)
+        
     def write_sc(self,script):
         self.moncur.executescript(script)
 
     def get_sc(self,script):
-        self.moncur.executescript(script)
+        self.moncur.execute(script)
         return self.moncur.fetchall()
     
     def write_certfr_tmp(self,monbul):
-        #link=str(monbul.link)
-        self.moncur.execute(f'INSERT INTO CERTFR_tmp VALUES("{monbul.crc}","{monbul.nom}","{monbul.obj}","{monbul.dateOrigine}","{monbul.dateUpdate}",{monbul.New},"{monbul.file}","{monbul.link}");')
-
+        self.moncur.execute(f'INSERT INTO CERTFR_tmp VALUES("{monbul.crc}","{monbul.nom}","{monbul.obj}","{monbul.dateOrigine}","{monbul.dateUpdate}",{monbul.New},"{monbul.file}");')
+        for url in monbul.link:
+            self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_Url VALUES("{monbul.nom}","{url}");')
+        
     def write_certfr_cve(self,certfr,cve):
         Hkey=certfr+'_'+cve
         self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_CVE VALUES("{Hkey}","{certfr}","{cve}");')
@@ -73,6 +88,7 @@ class C_sql:
 
           UPDATE CVE SET New=0;
           DELETE FROM CVE_tmp WHERE hkey in (SELECT DISTINCT Hkey FROM CVE);
+          DELETE FROM CVE WHERE cve_id IN (SELECT cve_id FROM CVE_tmp);
           INSERT OR replace INTO CVE SELECT * from CVE_tmp;
           DELETE FROM CVE_tmp;
 
@@ -110,7 +126,7 @@ class C_sql:
     
     def get_certfr(self,nom):
         monbul=C_certfr()
-        self.moncur.execute(f'SELECT * FROM CERTFR WHERE nom="{nom}";')
+        self.moncur.execute(f'SELECT * FROM CERTFR WHERE Nom="{nom}";')
         row=self.moncur.fetchone()
         if row:
             monbul.crc=row[0]
@@ -120,7 +136,8 @@ class C_sql:
             monbul.dateUpdate=row[4]
             monbul.New=row[5]
             monbul.file=row[6]
-            monbul.link=list(row[7])
+            self.moncur.execute(f'SELECT Url FROM CERTFR_Url WHERE Nom="{nom}";')
+            monbul.link=self.moncur.fetchall()
         return monbul
 
     def get_all_cve_certfr(self,certfr):
@@ -173,6 +190,34 @@ class C_sql:
         else:
             return None
 
+    def get_all_cpe_uri(self,uri):
+        all_cpe=[]
+        moncpe=C_cpe()
+        self.moncur.execute(f'SELECT DISTINCT * FROM CVE_cpe WHERE cpe LIKE "%{uri}%" ORDER BY cve_id;')
+        rows=self.moncur.fetchall()
+        if rows:
+            for row in rows:
+                moncpe.reset()
+                moncpe.crc=row[0]
+                moncpe.cve=row[1]
+                moncpe.conf=row[2]
+                moncpe.operateur=row[3]
+                moncpe.vulnerable=row[4]
+                moncpe.cpe23uri=row[5]
+                moncpe.versionStartExcluding=row[6]
+                moncpe.versionStartIncluding=row[7]
+                moncpe.versionEndExcluding=row[8]
+                moncpe.versionEndIncluding=row[9]
+                moncpe.New=row[10]
+                all_cpe.append(copy.copy(moncpe))
+            return all_cpe
+        else:
+            return None
+
+    def get_orphan_by_obj(self,obj):
+        self.moncur.execute(f'SELECT Nom,Obj FROM CERTFR WHERE Nom NOT IN (SELECT DISTINCT BULTIN FROM CERTFR_cve) AND Obj LIKE "%{obj}%";')
+        return self.moncur.fetchall()
+    
     def get_all_certfr_by_cve(self):
         self.moncur.executescript("""
          DROP TABLE IF EXISTS CVE_BULTIN;

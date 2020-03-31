@@ -2,7 +2,7 @@
 # fonctionne 
 # TODO :
 #   ne telecharger que les nouvelles url
-#   separer la api_key
+#   
 #Wsus cab http://go.microsoft.com/fwlink/?linkid=74689
 
 import requests
