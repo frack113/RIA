@@ -5,13 +5,16 @@
 # @brief Recherche d'Information Automatisée
 # @todo simplifier les imports best practice
 #
-# @mainpage description
-# telecharge et complete automatiquement les bulletins CERTFR_tmp
-# Avec les CVE/cpe
+# @mainpage
+# @section Description
+#telecharge et complete automatiquement les bulletins CERTFR_tmp
+#Avec les CVE/cpe
 #
-# Si possible :
-#   les KB microsoft
-#   les informations éditeurs
+#Si possible :
+#  les KB microsoft
+#  les informations éditeurs
+# @section schéma
+# @diafile RIA.dia
 
 import re
 import os
@@ -349,15 +352,16 @@ def Check_update_file():
 
 ## Core
 # @brief le script
+
 logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.info('Lancement du script')
 today=datetime.datetime.now().strftime("%Y%m%d")
 
+credit()
+
 if not exists("txt"):
     mkdir("txt")
     logging.info('manque le repertoire de sortie txt')
-
-credit()
 
 if os.path.exists('RIA.db'):
     logging.info('RIA.db ok')

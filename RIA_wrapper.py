@@ -4,7 +4,7 @@
 # @date 01/04/2020
 # @brief Class pour les recherches Internet
 #
-# @todo Replacé info par un objet
+# @todo Replacer info[] par un objet
 
 import requests
 import re
