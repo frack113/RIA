@@ -1,64 +1,86 @@
-# Version 0
-# fonctionne 
-# TODO :
-#   ne telecharger que les nouvelles url
-#   
-#Wsus cab http://go.microsoft.com/fwlink/?linkid=74689
+## La gestion de l'API Microsoft
+# @file RIA_mskb.py
+# @author Frack113
+# @date 01/04/2020
+# @brief Recherche d'Information Automatisée
+#
+# @warning la clé API est dans RIA_mskb.key
+#
+# @todo optimiser le code
+# @todo une class Wsus cab http://go.microsoft.com/fwlink/?linkid=74689
 
 import requests
 import json
 import re
 from RIA_sql import *
 
+## Gestion API Microsoft
 class C_mskb:
-    def __init__(self,MaBdd):
-        self.api_key='dans le fichier RIA_mskb.key '
 
+    ## Constructors
+    # @param MaBdd un objet C_sql
+    def __init__(self,MaBdd):
+        ## la clé API
+        self.api_key='dans le fichier RIA_mskb.key '
         file=open('RIA_mskb.key','r')
         key=file.readline()
         file.close()
         self.api_key=key.replace('\n','')
-        
+        ## le type de transaction
         self.api_type='application/json'
+        ## L'url API
         self.api_url='https://api.msrc.microsoft.com/updates?api-version=2017'
+        ## le header
         self.header={'Accept': self.api_type,'api-key': self.api_key}
+        ## La Bdd
         self.MaBdd=MaBdd
         self.MaBdd.write_sc("""
          CREATE TABLE IF NOT EXISTS MS_Product (ProductID TEXT UNIQUE NOT NULL,Value text);
          CREATE TABLE IF NOT EXISTS MS_Vuln (CVE TEXT,FIX_ID TEXT UNIQUE,ProductID TEXT,URL TEXT,Supercedence TEXT,Type TEXT);
         """)
 
-
-
+    ## efface totalement les tables
     def reset_db(self):
         self.MaBdd.write_sc("""
          DELETE FROM MS_Product;
          DELETE FROM MS_Vuln;
         """)
 
+    ## recupere toutes les URL
     def update_all_url(self):
         rep= requests.get(self.api_url,headers=self.header)
         jsontmp=json.loads(rep.text)
         rep.close()
         return jsontmp['value']
-    
+
+    ## sauvegarde en BDD un ProductID
+    # @param ProductID le nmr de ref
+    # @param Value la valeur lisible
     def write_product(self,ProductID,Value):
         self.MaBdd.write_sc(f'INSERT OR IGNORE INTO MS_Product VALUES("{ProductID}","{Value}");')
-       
+
+    ## sauvegarde en BDD un cve
+    # @param ms_cve le CVE corrigé
+    # @param fix_id le numero de KB
+    # @param product le ProductID
+    # @param ms_url l'URL pour plusd'information
+    # @param fix_Supercedence le KB remplacé
+    # @param typekb le type de KB
     def write_cve_kb(self,ms_cve,fix_id,product,ms_url,fix_Supercedence,typekb):
         self.MaBdd.write_sc(f'INSERT OR IGNORE INTO MS_Vuln VALUES("{ms_cve}","{fix_id}","{product}","{ms_url}","{fix_Supercedence}","{typekb}");')
 
+    ## recupere toutes les information
     def update_all_info(self):
         for security_update in self.update_all_url():
             url=security_update['CvrfUrl']
             rep=requests.get(url,headers=self.header)
             jsoncve=json.loads(rep.text)
             rep.close()
-    
+
             if 'FullProductName' in jsoncve['ProductTree']:
                 for ref in jsoncve['ProductTree']['FullProductName']:
                     self.write_product(ref["ProductID"],ref["Value"])
-            
+
             if 'Vulnerability' in jsoncve:
                 for data in jsoncve['Vulnerability']:
                     ms_cve=data['CVE']
@@ -77,5 +99,7 @@ class C_mskb:
                         for product in kb['ProductID']:
                             self.write_cve_kb(ms_cve,fix_id,product,ms_url,fix_Supercedence,typekb)
 
+    ## Cherche les information pour un CERTFR
+    # @param certfr le nom du CERTFR
     def get_info_certfr(self,certfr):
         return self.MaBdd.get_sc(f'select CVE,Value,FIX_ID,Url,type from MS_vuln left JOIN MS_Product ON MS_vuln.ProductID=MS_Product.ProductID WHERE MS_vuln.CVE IN (SELECT CVE from CERTFR_cve WHERE BULTIN="{certfr}");')

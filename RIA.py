@@ -1,3 +1,18 @@
+## Mon IA
+# @file RIA.py
+# @author Frack113
+# @date 01/04/2020
+# @brief Recherche d'Information Automatisée
+# @todo simplifier les imports best practice
+#
+# @mainpage description
+# telecharge et complete automatiquement les bulletins CERTFR_tmp
+# Avec les CVE/cpe
+#
+# Si possible :
+#   les KB microsoft
+#   les informations éditeurs
+
 import re
 import os
 from os import listdir,mkdir
@@ -9,7 +24,6 @@ import datetime
 import requests
 import shutil
 from tqdm import tqdm
-#import base64
 import logging
 
 from RIA_class import *
@@ -17,13 +31,14 @@ from RIA_sql import *
 from RIA_mskb import *
 from RIA_wrapper import *
 
+## Affiche simplement le credit
 def credit():
     mon_credit="""
                              ____ ____ ____
                             ||R |||I |||A ||
                             ||__|||__|||__||
                             |/__\|/__\|/__\|
-    
+
                               Recherche
                                  d'Information
                                        Automatisée
@@ -34,15 +49,19 @@ def credit():
 | \\___/' `\\___/ |
  \_/  \\___/  \\_/
   |\\__/   \\__/|               Version 0
-  |/  \\___/  \\|              Slow is best 
+  |/  \\___/  \\|              Slow is best
  ./\\__/   \\__/\\,
  | /  \\___/  \\ |
  \\/     V     \\/
-    
+
     """
     print(mon_credit)
 
-
+##
+# @brief Recherche regex
+# @param regex la regex
+# @param obj la chaine a chercher
+# @return la string ou ''
 def Search_re(regex,obj):
     result=re.search(regex,obj)
     if result:
@@ -50,9 +69,13 @@ def Search_re(regex,obj):
     else:
         return ''
 
+##
+# @brief extrait les info CERTFR d'un TAR
+# @param file le nom du fichier.tar
+# @return None
 def charge_cert(file):
     monbul=C_certfr()
-    archive=tarfile.open(join("certfr/",file),'r')    
+    archive=tarfile.open(join("certfr/",file),'r')
     for nom in archive.getnames():
         if re.search('CERT(FR|A)\-\d+\-AVI\-\d+\.txt',nom):
             monbul.reset()
@@ -70,7 +93,7 @@ def charge_cert(file):
             monbul.file=re.sub('\n\n','\n',bultin_avi)
 
             #le nom du bulletin
-            monbul.nom=Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)  
+            monbul.nom=Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)
             #l'objet   du bulletin
             monbul.obj=Search_re('Objet\:\ (.*)',monbul.file)
             #date de creation
@@ -80,7 +103,7 @@ def charge_cert(file):
             else:
                  monbul.dateOrigine=Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
             #date de modif
-            monbul.dateUpdate=Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)       
+            monbul.dateUpdate=Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)
             #les CVE
             regex=re.findall('http://cve\.mitre\.org/cgi\-bin/cvename\.cgi\?name\=(CVE\-\d{4}\-\d+)',monbul.file)
             if regex:
@@ -93,7 +116,10 @@ def charge_cert(file):
             monbul.New=1
             MaBdd.write_certfr_tmp(monbul)
 
-
+##
+# @brief extrait les info CVE d'un zip
+# @param file le nom du fichier.zip
+# @return None
 def charge_cve(file):
     moncve=C_cve()
     moncpe=C_cpe()
@@ -167,7 +193,12 @@ def charge_cve(file):
     pbarcve.close()
 
 
-#Une jolie sortie formater des info CERTFR
+
+##
+# @brief Une jolie sortie formater des info CERTFR
+# @param Nom le nom du bulletin
+# @param tab une liste
+# @return None
 def CERT_to_STR(Nom,tab):
     allcve=MaBdd.get_all_cve_certfr(Nom)
     if allcve:
@@ -190,7 +221,12 @@ def CERT_to_STR(Nom,tab):
     tab.append('')
 
 
-#les info Microsoft
+
+##
+# @brief Une jolie sortie formater des info Microsoft
+# @param Nom le nom du bulletin
+# @param tab une liste
+# @return None
 def MS_to_STR(Nom,tab):
     allcve=Ksoft.get_info_certfr(Nom)
     if allcve:
@@ -199,8 +235,13 @@ def MS_to_STR(Nom,tab):
         for row in allcve:
             tab.append(f"{row[0]:^20}|{row[1]:60}|{row[2]:^15}|{row[3]:^15}|{row[4]}")
 
-
-#Télécharge les fichiers si plus récent ou taille différents
+##
+# @brief Télécharge les fichiers si plus récent ou taille différents
+# @param nom le nom du fichier
+# @param rep son repertoire de sortie
+# @param url son url
+# @param scr sa cle de reference
+# @return None
 def Url_down(nom,rep,url,scr):
     info = MaBdd.get_url_info(nom)
     if info:
@@ -217,17 +258,19 @@ def Url_down(nom,rep,url,scr):
         r_file = requests.get(url, stream=True)
         file_date=r_file.headers['last-modified']
         file_taille=r_file.headers['content-length']
-        with open(rep + filename, 'wb') as f:
+        with open(rep + nom, 'wb') as f:
             shutil.copyfileobj(r_file.raw, f)
         MaBdd.set_url_info(nom,file_date,file_taille,scr)
 
-
-#Ecrit un bultin
+##
+# @brief Télécharge les fichiers si plus récent ou taille différents
+# @param nom le nom du bulletin
+# @param annee repertoire de sortie
 def Write_CERTFR(nom,annee):
     reponse=[]
     cert=MaBdd.get_certfr(nom)
     if not exists(f"txt/{annee}"):
-        mkdir(f"txt/{annee}")   
+        mkdir(f"txt/{annee}")
     file=open(f"txt/{annee}/{nom}.txt",'w',encoding='utf-8')
     bultin_avi=cert.decode_file()
     reponse.append(bultin_avi)
@@ -239,7 +282,10 @@ def Write_CERTFR(nom,annee):
     file.writelines('\n'.join(reponse))
     file.close()
 
-#A bosser
+##
+# @brief Télécharge les fichiers si plus récent ou taille différents
+# @param Nom dans les objets et non du fichier de sortie
+# @param uri chaine a chercher dans les uri23
 def URI_to_FILE(Nom,uri):
     tab=[]
     certs=MaBdd.get_orphan_by_obj(Nom)
@@ -259,17 +305,52 @@ def URI_to_FILE(Nom,uri):
             else:
                 tab.append(f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
                 test=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
-    file=file=open(f"txt/{Nom}.txt",'w',encoding='utf-8')    
+    file=file=open(f"txt/{Nom}.txt",'w',encoding='utf-8')
     file.writelines('\n'.join(tab))
     file.close()
-    
 
-##################
-#  LE Script :)  #
-##################
+##
+# @brief Télécharge au bessoin les CERTFR ET CVE
+def Check_update_file():
+    MaBdd.write_sc("UPDATE URL_file SET New=0;")
+    r_feed = requests.get('https://nvd.nist.gov/vuln/data-feeds#JSON_FEED')
+    feed=re.findall("nvdcve-1.1-[0-9]{4}\.json\.zip",r_feed.text)
+    pbar = tqdm(total=len(feed),ascii=True,desc="CVE")
+    for filename in feed:
+        pbar.update(1)
+        Url_down(filename,"nvd/","https://nvd.nist.gov/feeds/json/cve/1.1/" + filename,"CVE")
+    pbar.close()
+
+    # range (2000,2021) = [2000,2020] :)
+    year = datetime.date.today().year
+    pbar = tqdm(total=year-2000,ascii=True,desc="CERTFR")
+    for anne in range(2000,year +1):
+        pbar.update(1)
+        filename=str(anne)+".tar"
+        Url_down(filename,"certfr/","https://www.cert.ssi.gouv.fr/tar/"+filename,"CERTFR")
+    pbar.close()
+
+    maj=MaBdd.get_all_new_url()
+    if maj:
+        MaBdd.clean_tmp()
+        for fichier in maj:
+            if fichier['source']=="CERTFR":
+                charge_cert(fichier['Nom'])
+            elif fichier['source']=="CVE":
+                charge_cve(fichier['Nom'])
+        print ("Vérification des mise à jour")
+        MaBdd.flush_tmp()
+        print ("Nettoyage et Sauvegarde sur le disque")
+        MaBdd.save_db()
+    else:
+        print ("Pas de mise a jour")
+        MaBdd.clean_new()
+
+
+## Core
+# @brief le script
 logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logging.info('Lancement du script')
-
 today=datetime.datetime.now().strftime("%Y%m%d")
 
 if not exists("txt"):
@@ -292,7 +373,7 @@ if os.path.exists('RIA_mogs.txt'):
     for ligne in lignes:
         info=ligne.split(";")
         MaBdd.write_certfr_cve(info[0],info[1])
-
+    file.close()
 
 print("Mise a jour info API Microsoft")
 Ksoft=C_mskb(MaBdd)
@@ -301,11 +382,11 @@ if os.path.exists('RIA_mskb.key'):
         print ("Déjà fait aujourd'hui")
     else:
         Ksoft.update_all_info()
-        MaBdd.set_Info_date("Microsoft",today)    
+        MaBdd.set_Info_date("Microsoft",today)
 else:
     print("Manque le fichier RIA_mskb.key")
     logging.warning('Pas de key api MICROSOFT')
-    
+
 print("Mise a jour info Wrapper")
 Wrapper=C_wrapper(MaBdd)
 
@@ -341,41 +422,10 @@ Wrapper.Flush_cve()
 MaBdd.save_db()
 
 print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")
-MaBdd.write_sc("UPDATE URL_file SET New=0;")
+Check_update_file()
 
-r = requests.get('https://nvd.nist.gov/vuln/data-feeds#JSON_FEED')
-feed=re.findall("nvdcve-1.1-[0-9]{4}\.json\.zip",r.text)
-pbar = tqdm(total=len(feed),ascii=True,desc="CVE")
-for filename in re.findall("nvdcve-1.1-[0-9]{4}\.json\.zip",r.text):
-    pbar.update(1)
-    Url_down(filename,"nvd/","https://nvd.nist.gov/feeds/json/cve/1.1/" + filename,"CVE")
-pbar.close()
 
-# range (2000,2021) = [2000,2020] :)
-year = datetime.date.today().year
-pbar = tqdm(total=year-2000,ascii=True,desc="CERTFR")
-for anne in range(2000,year +1):
-    pbar.update(1)
-    filename=str(anne)+".tar"
-    Url_down(filename,"certfr/","https://www.cert.ssi.gouv.fr/tar/"+filename,"CERTFR")
-pbar.close()
-
-maj=MaBdd.get_all_new_url()
-if maj:
-    MaBdd.clean_tmp()
-    for fichier in maj:
-        if fichier['source']=="CERTFR":
-            charge_cert(fichier['Nom'])
-        elif fichier['source']=="CVE":
-            charge_cve(fichier['Nom'])
-    print ("Vérification des mise à jour")    
-    MaBdd.flush_tmp()
-    print ("Nettoyage et Sauvegarde sur le disque")
-    MaBdd.save_db()
-else:
-    MaBdd.clean_new()
-
-#Pour verifier la sortie sans avoir de mise a jour :)
+#       Pour verifier la sortie sans avoir de mise a jour :)
 #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
 
 print("Traite les mises a jour de buletin")
@@ -384,8 +434,8 @@ pbar = tqdm(total=len(rows),ascii=True,desc="Bultin")
 for bul in rows:
     pbar.update(1)
     logging.info(f'mise a jour de {bul[0]}')
-    gg=re.fullmatch('CERT(FR|A)\-(?P<an>\d+)\-AVI\-\d+',bul[0]) 
-    Write_CERTFR(bul[0],gg.group('an'))
+    re_result=re.fullmatch('CERT(FR|A)\-(?P<an>\d+)\-AVI\-\d+',bul[0])
+    Write_CERTFR(bul[0],re_result.group('an'))
 pbar.close()
 
 rows = MaBdd.get_all_certfr_by_cve()
@@ -393,8 +443,7 @@ fiche=open("txt/CVE_CERTFR.txt",'w', encoding='utf-8')
 pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="CVE_CERTFR")
 for bul in rows:
     pbar.update(1)
-    str_bul=f"{bul[0]:^10}:{bul[1]}\n"
-    fiche.writelines(str_bul)
+    fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
 fiche.close()
 pbar.close()
 
@@ -403,8 +452,7 @@ fiche=open("txt/Orphan.txt",'w', encoding='utf-8')
 pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="Orphan")
 for bul in rows:
     pbar.update(1)
-    str_bul=f"{bul[0]:^10}:{bul[1]}\n"
-    fiche.writelines(str_bul)
+    fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
 fiche.close()
 pbar.close()
 

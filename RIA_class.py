@@ -1,12 +1,36 @@
+## Gestion des CERTFR,CVE et CPE
+# @file RIA_class.py
+# @author Frack113
+# @date 01/04/2020
+# @brief Class pour les CERTFR,CVE et CPE
+
 import hashlib
 import base64
 
-#########################################
-#              CERTFR                   #
-# pour les bulletins                    #
-#########################################
+## Gestion des CERTFR
 class C_certfr:
+
+    ## The constructor.
     def __init__(self):
+       ## le nom du bultin
+       self.nom=""
+       ##l'objet du bultin
+       self.obj=""
+       ##Date de creation du bultin
+       self.dateOrigine=""
+       ##Date de modification du bultin
+       self.dateUpdate=""
+       ##boolean 0 deja traité , 1 nouveau
+       self.New=0
+       ##Le Bultin complet
+       self.file=""
+       ##Clé unique
+       self.crc=""
+       ##Les liens dans le bultin
+       self.link=[]
+
+    ## Remet les variables à l'état initial
+    def reset(self):
        self.nom=""
        self.obj=""
        self.dateOrigine=""
@@ -16,56 +40,63 @@ class C_certfr:
        self.crc=""
        self.link=[]
 
+    ## Calcul le CRC pour la clée UNIQUE SQL
+    def set_crc(self):
+        str_hkey=f"{self.nom}_{self.dateOrigine}_{self.dateUpdate}"
+        self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
+
+    ## decode le fichier base64
     def decode_file(self):
         return base64.b64decode(self.file).decode()
-    
+
+    ## encode le fichier en base64
     def encode_file(self):
         return base64.b64encode(self.file.encode()).decode()
 
+    ## encode les liens en base64
+    # surement plus utile
     def encode_link(self):
         hyrule=[]
         for zelda in self.link:
             hyrule.append(base64.b64encode(zelda.encode()).decode())
         self.link=hyrule
-        
+
+    ## decode les liens en base64
+    # surement plus utile
     def decode_link(self):
         hyrule=[]
         for zelda in self.link:
             hyrule.append(base64.b64decode(zelda).decode())
         self.link=hyrule
-        
-    def reset(self):
-       self.nom=""
-       self.obj=""
-       self.dateOrigine=""
-       self.dateUpdate=""
-       self.ref=[]
-       self.New=0
-       self.file=""
-       self.crc=""
-       self.link=[]
-
-    def set_crc(self):
-        str_hkey=f"{self.nom}_{self.dateOrigine}_{self.dateUpdate}"
-        self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
 
 
-#########################################
-#               CVE                     #
-# pour les CVE                          #
-#########################################
+
+
+## Gestion des CVE
 class C_cve:
+
+    ## The constructor.
     def __init__(self):
+        ## L'id CVE
         self.id=""
+        ## Le cvssV3
         self.cvssV3="NA"
+        ## La note de Base cvssV3
         self.cvssV3base=0
+        ## Le cvssV2
         self.cvssV2="NA"
+        ## La note de base cvssV2
         self.cvssV2base=0
+        ## La date de creation du CVE
         self.dateOrigine=""
+        ## La date derniere modification du CVE
         self.dateUpdate=""
+        ## boolean 0 deja traité , 1 nouveau
         self.New=0
+        ## Clé unique
         self.crc=""
 
+    ## Remet les variables à l'état initial
     def reset(self):
         self.id=""
         self.cvssV3="NA"
@@ -77,29 +108,43 @@ class C_cve:
         self.New=0
         self.crc=""
 
+    ## Calcul le CRC pour la clée UNIQUE SQL
     def set_crc(self):
         str_hkey=f"{self.id}_{self.cvssV3}_{self.cvssV3base}_{self.cvssV2}_{self.cvssV2base}_{self.dateOrigine}_{self.dateUpdate}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
 
-#########################################
-#               CPE                     #
-# pour les CPE                          #
-#########################################
+## Pour les CPE
 class C_cpe:
+
+    ## The constructor.
     def __init__(self):
+        ## l'ID du CPE
         self.id=""
+        ## Le cve de reférence
         self.cve=""
+        ## Nombre de configuration
         self.conf=0
+        ## Operateur OR ou AND
         self.operateur=""
+        ## Si vulnerable
+        #  ex Firefox sur windows firefox AND (false) Windows
         self.vulnerable=""
+        ## l'URI en 2.3
         self.cpe23Uri=""
+        ## Version de depart exclue
         self.versionStartExcluding=""
+        ## Version de depart inclue
         self.versionStartIncluding=""
+        ## Version de fin exclue
         self.versionEndExcluding=""
+        ## Version de fin inclue
         self.versionEndIncluding=""
+        ## boolean 0 deja traité , 1 nouveau
         self.New=0
+        ##Clé unique
         self.crc=""
 
+    ## Remet les variables à l'état initial
     def reset(self):
         self.id=""
         self.cve=""
@@ -114,6 +159,7 @@ class C_cpe:
         self.New=0
         self.crc=""
 
+    ## Calcul le CRC pour la clée UNIQUE SQL
     def set_crc(self):
         str_hkey=f"{self.id}_{self.cve}_{self.conf}_{self.operateur}_{self.vulnerable}_{self.cpe23Uri}_{self.versionStartExcluding}_{self.versionStartIncluding}_{self.versionEndExcluding}_{self.versionEndIncluding}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()

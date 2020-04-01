@@ -1,12 +1,10 @@
-# Version 0
-# fonctionne ou pas
-# Methode de recherche:
-#  REGEX
-#  JSON direct
-#  Div et Tag par Beautifulsoup
-# TODO :
-#   optimiser les cnx 
-#   
+## La gestion des wrapper Internet
+# @file RIA_wrapper.py
+# @author Frack113
+# @date 01/04/2020
+# @brief Class pour les recherches Internet
+#
+# @todo Replacé info par un objet
 
 import requests
 import re
@@ -15,25 +13,37 @@ import json
 
 from RIA_sql import *
 
+##Class pour le Wrapper
 class C_wrapper:
+
+    ## constructors
+    # @param MaBdd C_sql
     def __init__(self,MaBdd):
+        ##la MaBdd
         self.MaBdd=MaBdd
         self.MaBdd.write_sc("""
           CREATE TABLE IF NOT EXISTS URL_ck (Url TEXT UNIQUE,Date TEXT,Mod TEXT);
           CREATE TABLE IF NOT EXISTS URL_cve (Url TEXT UNIQUE,CVE TEXT,Date TEXT);
         """)
-        
+
+    ##Sauvegarde dans URL_ck
+    # @param info liste
     def write_url_ck(self,info):
         self.MaBdd.write_sc(f'INSERT OR REPLACE INTO URL_ck VALUES("{info[0]}","{info[1]}","{info[2]}")')
 
+    ##Sauvegarde dans URL_ck
+    # @param info liste
     def write_url_cve(self,info):
         self.MaBdd.write_sc(f'INSERT OR REPLACE INTO URL_cve VALUES("{info[0]}","{info[1]}","{info[2]}")')
 
+    ##Sauvegarde tous les couples Url/CVE trouvés
     def Flush_cve(self):
         wrap_cve=self.MaBdd.get_sc('SELECT Nom,CVE FROM CERTFR_Url JOIN URL_cve WHERE CERTFR_Url.Url=URL_cve.Url;')
         for w_cve in wrap_cve:
             self.MaBdd.write_certfr_cve(w_cve[0],w_cve[1])
 
+    ## Verifie si la page distante est plus recente
+    # @param url L'URL a vérifier
     def check_update(self,url):
         h_web=requests.head(url)
         date=h_web.headers['Last-Modified']
@@ -45,7 +55,9 @@ class C_wrapper:
                 return date
         else:
             return date
-        
+
+    ## Verifie si l'url existe deja dan sla MaBdd
+    # @param url L'URL a vérifier
     def Url_exist(self,url):
         row=self.MaBdd.get_sc(f'SELECT Date FROM URL_ck WHERE Url="{url}"')
         if row:
@@ -53,6 +65,8 @@ class C_wrapper:
         else:
             return False
 
+    ## Parse une url en regex
+    # @param info liste
     def check_regex(self,info):
         info[1]=self.check_update(info[0])
         if info[1]:
@@ -79,15 +93,18 @@ class C_wrapper:
                         self.write_url_cve(c_info)
                     feed_web.close()
             r_web.close()
-   
+
+    ## Verifie Gitlab
     def check_Gitlab(self):
         info=['https://about.gitlab.com/releases/categories/releases/','date','Gitlab',r'<a class=cover href=\'(/releases/\d{4}/\d{2}/\d{2}/.*-released/)\'','https://about.gitlab.com']
         self.check_regex(info)
 
+    ##Verifie Ubuntu
     def check_Ubuntu(self):
         info=['https://usn.ubuntu.com/months/','date','Ubuntu',r'https://usn.ubuntu.com/\d+-\d+/','']
         self.check_regex(info)
 
+    ##Verifie Kaspersky
     def check_Kaspersky(self):
         info=['https://support.kaspersky.com/general/vulnerability.aspx?el=12430','date','Kaspersky']
         r_web=requests.get(info[0])
@@ -109,6 +126,7 @@ class C_wrapper:
                     self.write_url_cve(c_info)
         r_web.close()
 
+    ## Verifie Xen
     def check_Xen(self):
        info=['http://xenbits.xen.org/xsa/xsa.json','date','Xen']
        r_web=requests.get(info[0])
@@ -128,4 +146,3 @@ class C_wrapper:
            for cve in all_cve:
                c_info[1]=cve
                self.write_url_cve(c_info)
-
