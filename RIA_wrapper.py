@@ -5,13 +5,27 @@
 # @brief Class pour les recherches Internet
 #
 # @todo Replacer info[] par un objet
+# @todo traiter les New
 
 import requests
 import re
 from bs4 import BeautifulSoup
 import json
+import copy
 
 from RIA_sql import *
+
+##Class Objet info Wrapper
+class C_wrapper_info:
+    def __init__(self):
+        self.Url=""
+        self.fichier=""
+        self.taille=0
+        self.Date=""
+        self.regex=""
+        self.S_Url=""
+        self.module=""
+        self.New=0
 
 ##Class pour le Wrapper
 class C_wrapper:
@@ -56,7 +70,7 @@ class C_wrapper:
         else:
             return date
 
-    ## Verifie si l'url existe deja dan sla MaBdd
+    ## Verifie si l'url existe deja dans la MaBdd
     # @param url L'URL a vérifier
     def Url_exist(self,url):
         row=self.MaBdd.get_sc(f'SELECT Date FROM URL_ck WHERE Url="{url}"')
@@ -96,6 +110,9 @@ class C_wrapper:
 
     ## Verifie Gitlab
     def check_Gitlab(self):
+        inf=C_wrapper_info()
+        inf.url='https://about.gitlab.com/releases/categories/releases/'
+
         info=['https://about.gitlab.com/releases/categories/releases/','date','Gitlab',r'<a class=cover href=\'(/releases/\d{4}/\d{2}/\d{2}/.*-released/)\'','https://about.gitlab.com']
         self.check_regex(info)
 
@@ -123,6 +140,7 @@ class C_wrapper:
                 all_cve=re.findall(r'CVE-\d+-\d+',str(F_cve))
                 c_info=[full_url,"",info[1]]
                 for cve in all_cve:
+                    c_info[1]=cve
                     self.write_url_cve(c_info)
         r_web.close()
 

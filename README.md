@@ -22,18 +22,10 @@ Test sous FEDORA 31 , Python 3.7.6
 
 ## Todo
 - nettoyer le code
+- Ajouter au Wrapper
+- ?..
 
-## Dependances
-- re
-- os
-- zipfile
-- tarfile
-- json
-- datetime
-- sqlite3
-- hashlib
-- requests
-- shutil
-- tqdm
-- base64
-- logging
+## Doculentation
+- Doxygen
+- Graphviz
+- Textlive pour LATEX to PDF

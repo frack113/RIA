@@ -4,22 +4,21 @@
 # @date 01/04/2020
 # @brief Recherche d'Information Automatisée
 # @todo simplifier les imports best practice
+# @todo repartir les fonctions "historique" dans les class
 #
 # @mainpage
 # @section Description
-#telecharge et complete automatiquement les bulletins CERTFR_tmp
-#Avec les CVE/cpe
+#telecharge et complete automatiquement les bulletins CERTFR avec les CVE/cpe
 #
 #Si possible :
 #  les KB microsoft
 #  les informations éditeurs
+#
 # @section schéma
-# @diafile RIA.dia
+# @diafile RIA_main.dia
 
 import re
 import os
-from os import listdir,mkdir
-from os.path import isfile, join, exists
 import zipfile
 import tarfile
 import json
@@ -75,10 +74,11 @@ def Search_re(regex,obj):
 ##
 # @brief extrait les info CERTFR d'un TAR
 # @param file le nom du fichier.tar
-# @return None
+# @diafile RIA_charge_cert.dia
+# @todo comme c'est TAR=>BDD deplacer dans la class C_sql
 def charge_cert(file):
     monbul=C_certfr()
-    archive=tarfile.open(join("certfr/",file),'r')
+    archive=tarfile.open(os.path.join("certfr/",file),'r')
     for nom in archive.getnames():
         if re.search('CERT(FR|A)\-\d+\-AVI\-\d+\.txt',nom):
             monbul.reset()
@@ -122,12 +122,13 @@ def charge_cert(file):
 ##
 # @brief extrait les info CVE d'un zip
 # @param file le nom du fichier.zip
-# @return None
+# @diafile RIA_charge_cve.dia
+# @todo comme c'est ZIP/JSON=>BDD deplacer dans la class C_sql
 def charge_cve(file):
     moncve=C_cve()
     moncpe=C_cpe()
     pbarcve=tqdm(total=1,ascii=True,unit="node",desc=file)
-    archive = zipfile.ZipFile(join("nvd/", file), 'r')
+    archive = zipfile.ZipFile(os.path.join("nvd/", file), 'r')
     jsonfile = archive.open(archive.namelist()[0])
     cve_dict = json.loads(jsonfile.read())
     pbarcve.total=len(cve_dict['CVE_Items'])
@@ -195,8 +196,6 @@ def charge_cve(file):
                                  MaBdd.write_cpe_tmp(moncpe)
     pbarcve.close()
 
-
-
 ##
 # @brief Une jolie sortie formater des info CERTFR
 # @param Nom le nom du bulletin
@@ -256,8 +255,8 @@ def Url_down(nom,rep,url,scr):
     else:
         download=True
     if download:
-        if not exists(rep):
-            mkdir(rep)
+        if not os.path.exists(rep):
+            os.mkdir(rep)
         r_file = requests.get(url, stream=True)
         file_date=r_file.headers['last-modified']
         file_taille=r_file.headers['content-length']
@@ -272,8 +271,8 @@ def Url_down(nom,rep,url,scr):
 def Write_CERTFR(nom,annee):
     reponse=[]
     cert=MaBdd.get_certfr(nom)
-    if not exists(f"txt/{annee}"):
-        mkdir(f"txt/{annee}")
+    if not os.path.exists(f"txt/{annee}"):
+        os.mkdir(f"txt/{annee}")
     file=open(f"txt/{annee}/{nom}.txt",'w',encoding='utf-8')
     bultin_avi=cert.decode_file()
     reponse.append(bultin_avi)
@@ -350,120 +349,129 @@ def Check_update_file():
         MaBdd.clean_new()
 
 
-## Core
-# @brief le script
+## Core du scripts
+# @brief le coeur du scripts
+# @todo simplifier les repetition wrapper
+def mon_script():
+    global MaBdd
+    global Ksoft
+    logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.info('Lancement du script')
+    today=datetime.datetime.now().strftime("%Y%m%d")
 
-logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-logging.info('Lancement du script')
-today=datetime.datetime.now().strftime("%Y%m%d")
+    credit()
 
-credit()
+    if os.path.exists("txt"):
+        pass
+    else:
+        os.mkdir("txt")
+        logging.info('manque le repertoire de sortie txt')
 
-if not exists("txt"):
-    mkdir("txt")
-    logging.info('manque le repertoire de sortie txt')
+    if os.path.exists('RIA.db'):
+        logging.info('RIA.db ok')
+    else:
+        dest = shutil.copyfile('RIA_init.db','RIA.db')
 
-if os.path.exists('RIA.db'):
-    logging.info('RIA.db ok')
-else:
-    dest = shutil.copyfile('RIA_init.db','RIA.db')
+    MaBdd=C_sql()
 
-MaBdd=C_sql()
+    if os.path.exists('RIA_mogs.txt'):
+        logging.info('Les mogs sont la')
+        file=open('RIA_mogs.txt','r')
+        lignes=file.read().splitlines()
+        for ligne in lignes:
+            info=ligne.split(";")
+            MaBdd.write_certfr_cve(info[0],info[1])
+        file.close()
 
-if os.path.exists('RIA_mogs.txt'):
-    logging.info('Les mogs sont la')
-    file=open('RIA_mogs.txt','r')
-    lignes=file.read().splitlines()
-    for ligne in lignes:
-        info=ligne.split(";")
-        MaBdd.write_certfr_cve(info[0],info[1])
-    file.close()
+    print("Mise a jour info API Microsoft")
+    Ksoft=C_mskb(MaBdd)
+    if os.path.exists('RIA_mskb.key'):
+        if MaBdd.get_Info_date("Microsoft")==today:
+            print ("Déjà fait aujourd'hui")
+        else:
+            Ksoft.update_all_info()
+            MaBdd.set_Info_date("Microsoft",today)
+    else:
+        print("Manque le fichier RIA_mskb.key")
+        logging.warning('Pas de key api MICROSOFT')
 
-print("Mise a jour info API Microsoft")
-Ksoft=C_mskb(MaBdd)
-if os.path.exists('RIA_mskb.key'):
-    if MaBdd.get_Info_date("Microsoft")==today:
+    print("Mise a jour info Wrapper")
+    Wrapper=C_wrapper(MaBdd)
+
+    print("Check Gitlab")
+    if MaBdd.get_Info_date("Gitlab")== today:
         print ("Déjà fait aujourd'hui")
     else:
-        Ksoft.update_all_info()
-        MaBdd.set_Info_date("Microsoft",today)
-else:
-    print("Manque le fichier RIA_mskb.key")
-    logging.warning('Pas de key api MICROSOFT')
+        Wrapper.check_Gitlab()
+        MaBdd.set_Info_date("Gitlab",today)
 
-print("Mise a jour info Wrapper")
-Wrapper=C_wrapper(MaBdd)
+    print("Check Ubuntu")
+    if MaBdd.get_Info_date("Ubuntu")== today:
+        print ("Déjà fait aujourd'hui")
+    else:
+        Wrapper.check_Ubuntu()
+        MaBdd.set_Info_date("Ubuntu",today)
 
-print("Check Gitlab")
-if MaBdd.get_Info_date("Gitlab")== today:
-    print ("Déjà fait aujourd'hui")
-else:
-    Wrapper.check_Gitlab()
-    MaBdd.set_Info_date("Gitlab",today)
+    print("Check Kaspersky")
+    if MaBdd.get_Info_date("Kaspersky")== today:
+        print ("Déjà fait aujourd'hui")
+    else:
+        Wrapper.check_Kaspersky()
+        MaBdd.set_Info_date("Kaspersky",today)
 
-print("Check Ubuntu")
-if MaBdd.get_Info_date("Ubuntu")== today:
-    print ("Déjà fait aujourd'hui")
-else:
-    Wrapper.check_Ubuntu()
-    MaBdd.set_Info_date("Ubuntu",today)
+    print("Check Xen")
+    if MaBdd.get_Info_date("Xen")== today:
+        print ("Déjà fait aujourd'hui")
+    else:
+        Wrapper.check_Xen()
+        MaBdd.set_Info_date("Xen",today)
 
-print("Check Kaspersky")
-if MaBdd.get_Info_date("Kaspersky")== today:
-    print ("Déjà fait aujourd'hui")
-else:
-    Wrapper.check_Kaspersky()
-    MaBdd.set_Info_date("Kaspersky",today)
+    Wrapper.Flush_cve()
+    MaBdd.save_db()
 
-print("Check Xen")
-if MaBdd.get_Info_date("Xen")== today:
-    print ("Déjà fait aujourd'hui")
-else:
-    Wrapper.check_Xen()
-    MaBdd.set_Info_date("Xen",today)
-
-Wrapper.Flush_cve()
-MaBdd.save_db()
-
-print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")
-Check_update_file()
+    print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")
+    Check_update_file()
 
 
 #       Pour verifier la sortie sans avoir de mise a jour :)
 #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
 
-print("Traite les mises a jour de buletin")
-rows=MaBdd.get_all_new_certfr()
-pbar = tqdm(total=len(rows),ascii=True,desc="Bultin")
-for bul in rows:
-    pbar.update(1)
-    logging.info(f'mise a jour de {bul[0]}')
-    re_result=re.fullmatch('CERT(FR|A)\-(?P<an>\d+)\-AVI\-\d+',bul[0])
-    Write_CERTFR(bul[0],re_result.group('an'))
-pbar.close()
+    print("Traite les mises a jour de buletin")
+    rows=MaBdd.get_all_new_certfr()
+    pbar = tqdm(total=len(rows),ascii=True,desc="Bultin")
+    for bul in rows:
+        pbar.update(1)
+        logging.info(f'mise a jour de {bul[0]}')
+        re_result=re.fullmatch('CERT(FR|A)\-(?P<an>\d+)\-AVI\-\d+',bul[0])
+        Write_CERTFR(bul[0],re_result.group('an'))
+    pbar.close()
 
-rows = MaBdd.get_all_certfr_by_cve()
-fiche=open("txt/CVE_CERTFR.txt",'w', encoding='utf-8')
-pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="CVE_CERTFR")
-for bul in rows:
-    pbar.update(1)
-    fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
-fiche.close()
-pbar.close()
+    rows = MaBdd.get_all_certfr_by_cve()
+    fiche=open("txt/CVE_CERTFR.txt",'w', encoding='utf-8')
+    pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="CVE_CERTFR")
+    for bul in rows:
+        pbar.update(1)
+        fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
+    fiche.close()
+    pbar.close()
 
-rows = MaBdd.get_all_orphan()
-fiche=open("txt/Orphan.txt",'w', encoding='utf-8')
-pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="Orphan")
-for bul in rows:
-    pbar.update(1)
-    fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
-fiche.close()
-pbar.close()
+    rows = MaBdd.get_all_orphan()
+    fiche=open("txt/Orphan.txt",'w', encoding='utf-8')
+    pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="Orphan")
+    for bul in rows:
+        pbar.update(1)
+        fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
+    fiche.close()
+    pbar.close()
+
+    print ("traitement de fichier recherche URI")
+    URI_to_FILE("Wireshark","Wireshark:Wireshark")
+    URI_to_FILE("Drupal","drupal:drupal")
+
+    MaBdd.close_db()
+
+    print("Bye Bye")
 
 
-URI_to_FILE("Wireshark","Wireshark:Wireshark")
-URI_to_FILE("Drupal","drupal:drupal")
-
-MaBdd.close_db()
-
-print("Bye Bye")
+#main a cause de Doxygen pour la docs
+mon_script()
