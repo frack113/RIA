@@ -114,7 +114,7 @@ class C_mskb:
                     return ("Microsoft déjà à jour")
             else:
                 self.update_all_info()
-                self.MaBdd.set_Info_date("Microsoft",today)
+                self.MaBdd.set_Info_date("Microsoft",date)
                 return ("Microsoft mise à jour")
         else:
             return ("Manque le fichier RIA_mskb.key")

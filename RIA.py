@@ -311,43 +311,6 @@ def URI_to_FILE(Nom,uri):
     file.writelines('\n'.join(tab))
     file.close()
 
-##
-# @brief Télécharge au bessoin les CERTFR ET CVE
-def Check_update_file():
-    MaBdd.write_sc("UPDATE URL_file SET New=0;")
-    r_feed = requests.get('https://nvd.nist.gov/vuln/data-feeds#JSON_FEED')
-    feed=re.findall("nvdcve-1.1-[0-9]{4}\.json\.zip",r_feed.text)
-    pbar = tqdm(total=len(feed),ascii=True,desc="CVE")
-    for filename in feed:
-        pbar.update(1)
-        Url_down(filename,"nvd/","https://nvd.nist.gov/feeds/json/cve/1.1/" + filename,"CVE")
-    pbar.close()
-
-    # range (2000,2021) = [2000,2020] :)
-    year = datetime.date.today().year
-    pbar = tqdm(total=year-2000,ascii=True,desc="CERTFR")
-    for anne in range(2000,year +1):
-        pbar.update(1)
-        filename=str(anne)+".tar"
-        Url_down(filename,"certfr/","https://www.cert.ssi.gouv.fr/tar/"+filename,"CERTFR")
-    pbar.close()
-
-    maj=MaBdd.get_all_new_url()
-    if maj:
-        MaBdd.clean_tmp()
-        for fichier in maj:
-            if fichier['source']=="CERTFR":
-                charge_cert(fichier['Nom'])
-            elif fichier['source']=="CVE":
-                charge_cve(fichier['Nom'])
-        print ("Vérification des mise à jour")
-        MaBdd.flush_tmp()
-        print ("Nettoyage et Sauvegarde sur le disque")
-        MaBdd.save_db()
-    else:
-        print ("Pas de mise a jour")
-        MaBdd.clean_new()
-
 
 ## Core du scripts
 # @brief le coeur du scripts
@@ -391,16 +354,27 @@ def mon_script():
 
     print("Un peu de data mining sur le Web")
     Wrapper=C_wrapper(MaBdd)
-    Wrapper.Check_Wapper_Update(today)
+    Wrapper.Reset_New()
+    Wrapper.Check_ALL_Wapper_Update(today)
     Wrapper.Flush_cve()
-    print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")
-    Check_update_file()
+    print ("Téléchargement des nouveaux fichiers CVE ET CERTFR")
+    Wrapper.Check_Certfr(int(today[:4]))
+    Wrapper.Check_CVE()
 
+    print ("Chargement des mise à jour CVE ET CERTFR")
+    updates=Wrapper.Read_wrapper_info("Module","CERTFR",True,True)
+    logging.info("Update CERTFR : "+str(len(updates)))
+    for update in updates:
+        charge_cert(update.Fichier)
+        logging.warning(update.Fichier+ "mis a jour")
+    updates=Wrapper.Read_wrapper_info("Module","CVE",True,True)
+    logging.info("Update CVE : "+str(len(updates)))
+    for update in updates:
+        charge_cve(update.Fichier)
+        logging.warning(update.Fichier+ "mis a jour")
+
+    MaBdd.flush_tmp()
     MaBdd.save_db()
-
-    print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")
-    Check_update_file()
-
 
 #       Pour verifier la sortie sans avoir de mise a jour :)
 #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
