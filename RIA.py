@@ -383,50 +383,19 @@ def mon_script():
             MaBdd.write_certfr_cve(info[0],info[1])
         file.close()
 
-    print("Mise a jour info API Microsoft")
+    print("Mise à jour info API Microsoft")
     Ksoft=C_mskb(MaBdd)
-    if os.path.exists('RIA_mskb.key'):
-        if MaBdd.get_Info_date("Microsoft")==today:
-            print ("Déjà fait aujourd'hui")
-        else:
-            Ksoft.update_all_info()
-            MaBdd.set_Info_date("Microsoft",today)
-    else:
-        print("Manque le fichier RIA_mskb.key")
-        logging.warning('Pas de key api MICROSOFT')
+    reponse=Ksoft.Check_Mskb_Update(today)
+    # on log pour le moment un peu fiu
+    logging.warning(reponse)
 
-    print("Mise a jour info Wrapper")
+    print("Un peu de data mining sur le Web")
     Wrapper=C_wrapper(MaBdd)
-
-    print("Check Gitlab")
-    if MaBdd.get_Info_date("Gitlab")== today:
-        print ("Déjà fait aujourd'hui")
-    else:
-        Wrapper.check_Gitlab()
-        MaBdd.set_Info_date("Gitlab",today)
-
-    print("Check Ubuntu")
-    if MaBdd.get_Info_date("Ubuntu")== today:
-        print ("Déjà fait aujourd'hui")
-    else:
-        Wrapper.check_Ubuntu()
-        MaBdd.set_Info_date("Ubuntu",today)
-
-    print("Check Kaspersky")
-    if MaBdd.get_Info_date("Kaspersky")== today:
-        print ("Déjà fait aujourd'hui")
-    else:
-        Wrapper.check_Kaspersky()
-        MaBdd.set_Info_date("Kaspersky",today)
-
-    print("Check Xen")
-    if MaBdd.get_Info_date("Xen")== today:
-        print ("Déjà fait aujourd'hui")
-    else:
-        Wrapper.check_Xen()
-        MaBdd.set_Info_date("Xen",today)
-
+    Wrapper.Check_Wapper_Update(today)
     Wrapper.Flush_cve()
+    print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")
+    Check_update_file()
+
     MaBdd.save_db()
 
     print ("Vérification de la mise à jour des fichiers CVE ET CERTFR")

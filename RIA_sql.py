@@ -1,14 +1,12 @@
+from  RIA_class import *
+import sqlite3
+import copy
+
 ## La gestion de la base de données
 # @file RIA_sql.py
 # @author Frack113
 # @date 01/04/2020
 # @brief Class pour les interactions avec la Bdd
-#
-from  RIA_class import *
-import sqlite3
-import copy
-
-## Class pour la Bdd
 class C_sql:
 
     ## constructors

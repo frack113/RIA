@@ -12,6 +12,7 @@
 import requests
 import json
 import re
+import os
 from RIA_sql import *
 
 ## Gestion API Microsoft
@@ -103,3 +104,17 @@ class C_mskb:
     # @param certfr le nom du CERTFR
     def get_info_certfr(self,certfr):
         return self.MaBdd.get_sc(f'select CVE,Value,FIX_ID,Url,type from MS_vuln left JOIN MS_Product ON MS_vuln.ProductID=MS_Product.ProductID WHERE MS_vuln.CVE IN (SELECT CVE from CERTFR_cve WHERE BULTIN="{certfr}");')
+
+    ## Verifie la mise a jour
+    # @param date la date "YYYYMMDD" a verifier
+    # @retrun String d'information
+    def Check_Mskb_Update(self,date):
+        if os.path.exists('RIA_mskb.key'):
+            if self.MaBdd.get_Info_date("Microsoft")==date:
+                    return ("Microsoft déjà à jour")
+            else:
+                self.update_all_info()
+                self.MaBdd.set_Info_date("Microsoft",today)
+                return ("Microsoft mise à jour")
+        else:
+            return ("Manque le fichier RIA_mskb.key")
