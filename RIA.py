@@ -265,7 +265,7 @@ def Url_down(nom,rep,url,scr):
         MaBdd.set_url_info(nom,file_date,file_taille,scr)
 
 ##
-# @brief Télécharge les fichiers si plus récent ou taille différents
+# @brief Ecrit dans un fichier text les informations du bulletin
 # @param nom le nom du bulletin
 # @param annee repertoire de sortie
 def Write_CERTFR(nom,annee):
@@ -285,7 +285,7 @@ def Write_CERTFR(nom,annee):
     file.close()
 
 ##
-# @brief Télécharge les fichiers si plus récent ou taille différents
+# @brief Ecrit un fichiers avec bulletins et URI23 pour une recherche
 # @param Nom dans les objets et non du fichier de sortie
 # @param uri chaine a chercher dans les uri23
 def URI_to_FILE(Nom,uri):
@@ -307,7 +307,7 @@ def URI_to_FILE(Nom,uri):
             else:
                 tab.append(f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
                 test=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
-    file=file=open(f"txt/{Nom}.txt",'w',encoding='utf-8')
+    file=file=open(f"mogs/{Nom}.txt",'w',encoding='utf-8')
     file.writelines('\n'.join(tab))
     file.close()
 
@@ -328,23 +328,25 @@ def mon_script():
         pass
     else:
         os.mkdir("txt")
-        logging.info('manque le repertoire de sortie txt')
+        logging.warning('manque le repertoire de sortie txt')
+
+    if os.path.exists("mogs"):
+        pass
+    else:
+        os.mkdir("mogs")
+        logging.warning('manque le repertoire de sortie mogs')
 
     if os.path.exists('RIA.db'):
         logging.info('RIA.db ok')
     else:
+        logging.warning('manque le fihier de bdd initial')
         dest = shutil.copyfile('RIA_init.db','RIA.db')
 
     MaBdd=C_sql()
 
     if os.path.exists('RIA_mogs.txt'):
-        logging.info('Les mogs sont la')
-        file=open('RIA_mogs.txt','r')
-        lignes=file.read().splitlines()
-        for ligne in lignes:
-            info=ligne.split(";")
-            MaBdd.write_certfr_cve(info[0],info[1])
-        file.close()
+        logging.info("Traitement de l'aide des mogs")
+        MaBdd.load_mogs()
 
     print("Mise à jour info API Microsoft")
     Ksoft=C_mskb(MaBdd)
@@ -358,8 +360,8 @@ def mon_script():
     Wrapper.Check_ALL_Wapper_Update(today)
     Wrapper.Flush_cve()
     print ("Téléchargement des nouveaux fichiers CVE ET CERTFR")
-    Wrapper.Check_Certfr(int(today[:4]))
-    Wrapper.Check_CVE()
+    Wrapper.Download_Certfr(int(today[:4]))
+    Wrapper.Download_CVE()
 
     print ("Chargement des mise à jour CVE ET CERTFR")
     updates=Wrapper.Read_wrapper_info("Module","CERTFR",True,True)
@@ -379,9 +381,9 @@ def mon_script():
 #       Pour verifier la sortie sans avoir de mise a jour :)
 #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
 
-    print("Traite les mises a jour de buletin")
+    print("Traite les mises a jour de bulletin")
     rows=MaBdd.get_all_new_certfr()
-    pbar = tqdm(total=len(rows),ascii=True,desc="Bultin")
+    pbar = tqdm(total=len(rows),ascii=True,desc="Bulletin")
     for bul in rows:
         pbar.update(1)
         logging.info(f'mise a jour de {bul[0]}')
@@ -391,7 +393,7 @@ def mon_script():
 
     rows = MaBdd.get_all_certfr_by_cve()
     fiche=open("txt/CVE_CERTFR.txt",'w', encoding='utf-8')
-    pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="CVE_CERTFR")
+    pbar =  tqdm(total=len(rows),unit="bulletin",ascii=True,desc="CVE_CERTFR")
     for bul in rows:
         pbar.update(1)
         fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
@@ -400,21 +402,31 @@ def mon_script():
 
     rows = MaBdd.get_all_orphan()
     fiche=open("txt/Orphan.txt",'w', encoding='utf-8')
-    pbar =  tqdm(total=len(rows),unit="buletin",ascii=True,desc="Orphan")
+    pbar =  tqdm(total=len(rows),unit="bulletin",ascii=True,desc="Orphan")
     for bul in rows:
         pbar.update(1)
         fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
     fiche.close()
     pbar.close()
 
-    print ("traitement de fichier recherche URI")
-    URI_to_FILE("Wireshark","Wireshark:Wireshark")
-    URI_to_FILE("Drupal","drupal:drupal")
+
+    if os.path.exists('RIA_uri_manual.txt'):
+        print ("traitement des fichiers de recherche URI manuelle")
+        logging.info('Sortie pour les futurs mogs')
+        file=open("RIA_uri_manual.txt")
+        lignes=file.read().splitlines()
+        pbar =  tqdm(total=len(lignes),unit="Fichier",ascii=True,desc="Uri")
+        for ligne in lignes:
+            pbar.update(1)
+            info=ligne.split(";")
+            URI_to_FILE(info[0],info[1])
+        fiche.close()
+        pbar.close()
 
     MaBdd.close_db()
 
     print("Bye Bye")
-
+    logging.info('fin de traitement')
 
 #main a cause de Doxygen pour la docs
 mon_script()

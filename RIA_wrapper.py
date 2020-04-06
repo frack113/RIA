@@ -24,7 +24,7 @@ class C_wrapper_info:
         self.Fichier=""
         self.Taille=0
         self.Rep=""
-        self.Date=""
+        self.Date="date"
         self.Regex=""
         self.S_Url=""
         self.Module=""
@@ -46,7 +46,7 @@ class C_wrapper:
 
     ##
     # @brief remet a 0 le champ New
-    # 
+    #
     def Reset_New(self):
         self.MaBdd.write_sc('UPDATE URL_info SET New=0;')
 
@@ -136,12 +136,12 @@ class C_wrapper:
             with open(info.Rep + info.Fichier, 'wb') as f:
                 shutil.copyfileobj(r_file.raw, f)
             self.Write_wrapper_info(info)
-        r_file.close()    
+        r_file.close()
 
     ##
     # @brief Verifie si le header de la page distante est plus recent
     # @param info le C_wrapper_info a verifier
-    # @return Boolean 
+    # @return Boolean
     def Url_is_updated(self,info):
         h_web=requests.head(info.Url)
         date=h_web.headers['Last-Modified']
@@ -194,7 +194,7 @@ class C_wrapper:
     ##
     # @brief Télécharge les Tar CERTFR si plus récent
     # @param EndDate l'année de fin int(YYYY)
-    def Check_Certfr(self,EndDate):
+    def Download_Certfr(self,EndDate):
         info=C_wrapper_info()
         for annee in range(2000,EndDate+1):
             fichier=str(annee)+".tar"
@@ -205,13 +205,14 @@ class C_wrapper:
                 info.Module="CERTFR"
                 info.Rep="certfr/"
                 info.Fichier=fichier
-                info.Url="https://www.cert.ssi.gouv.fr/tar/"+fichier 
+                info.Date="unjour"
+                info.Url="https://www.cert.ssi.gouv.fr/tar/"+fichier
             self.Url_down_file(info)
 
     ##
     # @brief Télécharge les ZIP CVE NIST si plus récent
-    # 
-    def Check_CVE(self):
+    #
+    def Download_CVE(self):
         info=C_wrapper_info()
         r_feed = requests.get('https://nvd.nist.gov/vuln/data-feeds#JSON_FEED')
         feed=re.findall("nvdcve-1.1-[0-9]{4}\.json\.zip",r_feed.text)
@@ -223,20 +224,20 @@ class C_wrapper:
                 info.Module="CVE"
                 info.Rep="nvd/"
                 info.Fichier=fichier
-                info.Url="https://nvd.nist.gov/feeds/json/cve/1.1/"+fichier 
+                info.Url="https://nvd.nist.gov/feeds/json/cve/1.1/"+fichier
             self.Url_down_file(info)
-        r_feed.close()    
+        r_feed.close()
 
     ##
     # @brief Verifie les release de la page about.gitlab.com
-    #          
+    #
     def Check_Gitlab(self):
         inf=C_wrapper_info()
         inf.Url='https://about.gitlab.com/releases/categories/releases/'
         inf.Module="Gitlab"
         inf.Regex=r'<a class=cover href=\'(/releases/\d{4}/\d{2}/\d{2}/.*-released/)\''
         inf.S_Url='https://about.gitlab.com'
-        self.check_regex(inf) 
+        self.check_regex(inf)
 
     ##
     # @brief Verifie les release de la page https://usn.ubuntu.com/months/
@@ -299,7 +300,7 @@ class C_wrapper:
             for cve in all_cve:
                 c_info[1]=cve
                 self.write_url_cve(c_info)
-                
+
     ##
     # Vérifie tous les editeurs en une seule fonction
     # @param date la date "YYYYMMDD" a verifier

@@ -303,3 +303,14 @@ class C_sql:
     def get_all_orphan(self):
         self.moncur.execute("SELECT Nom,Obj FROM CERTFR WHERE Nom NOT IN (SELECT DISTINCT BULTIN FROM CERTFR_cve);")
         return self.moncur.fetchall()
+
+    ##
+    # @brief Charge en BDD les couples CERTFR;CVE trouvés manuellement
+    # 
+    def load_mogs(self):
+        file=open('RIA_mogs.txt','r')
+        lignes=file.read().splitlines()
+        for ligne in lignes:
+            info=ligne.split(";")
+            self.write_certfr_cve(info[0],info[1])
+        file.close()        

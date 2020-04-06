@@ -1,0 +1,259 @@
+PREMIER MINISTRE
+Paris, le 14 janvier 2020
+N° CERTFR-2020-AVI-026
+S . G . D . S . N
+Agence nationale
+de la sécurité des
+systèmes d'information
+Affaire suivie par: CERT-FR
+AVIS DU CERT-FR
+Objet: Multiples vulnérabilités dans Microsoft Windows
+Gestion du document
+Référence
+Titre
+Date de la première version
+Date de la dernière version
+Source(s)
+Pièce(s) jointe(s)
+CERTFR-2020-AVI-026
+Multiples vulnérabilités dans Microsoft Windows
+14 janvier 2020
+14 janvier 2020
+Bulletin de sécurité Microsoft du 14 janvier 2020
+Aucune(s)
+Tableau 1:(cid:160)Gestion du document
+Une gestion de version détaillée se trouve à la fin de ce document.
+Risque(s)
+Contournement de la fonctionnalité de sécurité
+Atteinte à la confidentialité des données
+Déni de service
+Exécution de code à distance
+Élévation de privilèges
+Systèmes affectés
+Windows 10 Version 1607 pour systèmes 32 bits
+Windows 10 Version 1607 pour systèmes x64
+Windows 10 Version 1709 pour ARM64-based Systems
+Windows 10 Version 1709 pour systèmes 32 bits
+Windows 10 Version 1709 pour systèmes x64
+Windows 10 Version 1803 pour ARM64-based Systems
+Windows 10 Version 1803 pour systèmes 32 bits
+Windows 10 Version 1803 pour systèmes x64
+Windows 10 Version 1809 pour ARM64-based Systems
+Windows 10 Version 1809 pour systèmes 32 bits
+Windows 10 Version 1809 pour systèmes x64
+Windows 10 Version 1903 pour ARM64-based Systems
+Windows 10 Version 1903 pour systèmes 32 bits
+Windows 10 Version 1903 pour systèmes x64
+Windows 10 Version 1909 pour ARM64-based Systems
+Windows 10 Version 1909 pour systèmes 32 bits
+Windows 10 Version 1909 pour systèmes x64
+Windows 10 pour systèmes 32 bits
+Windows 10 pour systèmes x64
+Windows 7 pour systèmes 32 bits Service Pack 1
+Windows 7 pour systèmes x64 Service Pack 1
+Windows 8.1 pour systèmes 32 bits
+Windows 8.1 pour systèmes x64
+Windows RT 8.1
+Windows Server 2008 R2 pour systèmes Itanium Service Pack 1
+Windows Server 2008 R2 pour systèmes x64 Service Pack 1
+Windows Server 2008 R2 pour systèmes x64 Service Pack 1 (Server Core installation)
+Windows Server 2008 pour systèmes 32 bits Service Pack 2
+Windows Server 2008 pour systèmes 32 bits Service Pack 2 (Server Core installation)
+Windows Server 2008 pour systèmes Itanium Service Pack 2
+Windows Server 2008 pour systèmes x64 Service Pack 2
+Windows Server 2008 pour systèmes x64 Service Pack 2 (Server Core installation)
+Windows Server 2012
+Windows Server 2012 (Server Core installation)
+Windows Server 2012 R2
+Windows Server 2012 R2 (Server Core installation)
+Windows Server 2016
+Windows Server 2016 (Server Core installation)
+Windows Server 2019
+Windows Server 2019 (Server Core installation)
+Windows Server, version 1803 (Server Core Installation)
+Windows Server, version 1903 (Server Core installation)
+Windows Server, version 1909 (Server Core installation)
+Résumé
+De multiples vulnérabilités ont été corrigées dans Microsoft Windows. Elles permettent à un 
+attaquant de provoquer une exécution de code à distance, une atteinte à la confidentialité des 
+données, une élévation de privilèges, un contournement de la fonctionnalité de sécurité et un 
+déni de service.
+Solution
+Se référer au bulletin de sécurité de l'éditeur pour l'obtention des correctifs (cf. section 
+Documentation).
+Documentation
+Bulletin de sécurité Microsoft du 14 janvier 2020
+https://portal.msrc.microsoft.com/fr-FR/security-guidance
+Référence CVE CVE-2020-0630
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0630
+Référence CVE CVE-2020-0631
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0631
+Référence CVE CVE-2020-0636
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0636
+Référence CVE CVE-2020-0644
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0644
+Référence CVE CVE-2020-0637
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0637
+Référence CVE CVE-2020-0639
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0639
+Référence CVE CVE-2020-0627
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0627
+Référence CVE CVE-2020-0626
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0626
+Référence CVE CVE-2020-0625
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0625
+Référence CVE CVE-2020-0624
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0624
+Référence CVE CVE-2020-0623
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0623
+Référence CVE CVE-2020-0622
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0622
+Référence CVE CVE-2020-0621
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0621
+Référence CVE CVE-2020-0620
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0620
+Référence CVE CVE-2020-0612
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0612
+Référence CVE CVE-2020-0613
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0613
+Référence CVE CVE-2020-0610
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0610
+Référence CVE CVE-2020-0611
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0611
+Référence CVE CVE-2020-0616
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0616
+Référence CVE CVE-2020-0617
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0617
+Référence CVE CVE-2020-0614
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0614
+Référence CVE CVE-2020-0628
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0628
+Référence CVE CVE-2020-0609
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0609
+Référence CVE CVE-2020-0641
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0641
+Référence CVE CVE-2020-0643
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0643
+Référence CVE CVE-2020-0608
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0608
+Référence CVE CVE-2020-0642
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0642
+Référence CVE CVE-2020-0632
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0632
+Référence CVE CVE-2020-0629
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0629
+Référence CVE CVE-2020-0638
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0638
+Référence CVE CVE-2020-0633
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0633
+Référence CVE CVE-2020-0607
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0607
+Référence CVE CVE-2020-0634
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0634
+Référence CVE CVE-2020-0601
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0601
+Référence CVE CVE-2020-0615
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0615
+Référence CVE CVE-2020-0635
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-0635
+Gestion détaillée du document
+le 14 janvier 2020
+Version initiale
+Conditions d’utilisation de ce document : https://www.cert.ssi.gouv.fr
+Dernière version de ce document : https://www.cert.ssi.gouv.fr/avis/CERTFR-2020-AVI-026/
+
+----------------------------------------
+-------------- RIA By HBT --------------
+----------------------------------------
+CVE                 |CVSS v3                                      |Base V3|CVSS V2                            |Base V2| Pubication | Modification
+CVE-2020-0601       |CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N |  8.1  |AV:N/AC:M/Au:N/C:P/I:P/A:N         |  5.8  | 2020-01-14 | 2020-01-16 
+CVE-2020-0607       |CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N |  5.5  |AV:N/AC:M/Au:N/C:P/I:N/A:N         |  4.3  | 2020-01-14 | 2020-01-17 
+CVE-2020-0608       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N |  5.5  |AV:L/AC:L/Au:N/C:P/I:N/A:N         |  2.1  | 2020-01-14 | 2020-01-17 
+CVE-2020-0609       |CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H |  9.8  |AV:N/AC:L/Au:N/C:C/I:C/A:C         |  10   | 2020-01-14 | 2020-01-17 
+CVE-2020-0610       |CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H |  9.8  |AV:N/AC:L/Au:N/C:C/I:C/A:C         |  10   | 2020-01-14 | 2020-01-17 
+CVE-2020-0611       |CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H |  7.5  |AV:N/AC:H/Au:N/C:P/I:P/A:P         |  5.1  | 2020-01-14 | 2020-01-17 
+CVE-2020-0612       |CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H |  7.5  |AV:N/AC:L/Au:N/C:N/I:N/A:P         |   5   | 2020-01-14 | 2020-01-22 
+CVE-2020-0613       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0614       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0615       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N |  5.5  |AV:L/AC:L/Au:N/C:P/I:N/A:N         |  2.1  | 2020-01-14 | 2020-01-17 
+CVE-2020-0616       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H |  5.5  |AV:L/AC:L/Au:N/C:N/I:N/A:C         |  4.9  | 2020-01-14 | 2020-01-17 
+CVE-2020-0617       |CVSS:3.1/AV:L/AC:L/PR:H/UI:N/S:C/C:N/I:N/A:H |   6   |AV:L/AC:L/Au:N/C:N/I:N/A:C         |  4.9  | 2020-01-14 | 2020-01-22 
+CVE-2020-0620       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-16 
+CVE-2020-0621       |CVSS:3.1/AV:L/AC:L/PR:H/UI:N/S:U/C:N/I:H/A:N |  4.4  |AV:L/AC:L/Au:N/C:N/I:P/A:N         |  2.1  | 2020-01-14 | 2020-01-17 
+CVE-2020-0622       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N |  5.5  |AV:L/AC:L/Au:N/C:P/I:N/A:N         |  2.1  | 2020-01-14 | 2020-01-17 
+CVE-2020-0623       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0624       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-17 
+CVE-2020-0625       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0626       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0627       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0628       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0629       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0630       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0631       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0632       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0633       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-15 
+CVE-2020-0634       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:C/I:C/A:C         |  7.2  | 2020-01-14 | 2020-01-17 
+CVE-2020-0635       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:C/I:C/A:C         |  7.2  | 2020-01-14 | 2020-01-17 
+CVE-2020-0636       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-24 
+CVE-2020-0637       |CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N |  6.5  |AV:N/AC:L/Au:S/C:P/I:N/A:N         |   4   | 2020-01-14 | 2020-01-17 
+CVE-2020-0638       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:P/I:P/A:P         |  4.6  | 2020-01-14 | 2020-01-16 
+CVE-2020-0639       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N |  5.5  |AV:L/AC:L/Au:N/C:P/I:N/A:N         |  2.1  | 2020-01-14 | 2020-01-21 
+CVE-2020-0641       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:C/I:C/A:C         |  7.2  | 2020-01-14 | 2020-01-16 
+CVE-2020-0642       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:C/I:C/A:C         |  7.2  | 2020-01-14 | 2020-01-16 
+CVE-2020-0643       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N |  5.5  |AV:L/AC:L/Au:N/C:P/I:N/A:N         |  2.1  | 2020-01-14 | 2020-01-19 
+CVE-2020-0644       |CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H |  7.8  |AV:L/AC:L/Au:N/C:C/I:C/A:C         |  7.2  | 2020-01-14 | 2020-01-16 
+
+	CVE                 |Conf| OPE |  Vuln | CPE                                                        | Start_incl | Start_excl |  End_incl  |  End_excl
+	   CVE-2020-0601    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0607    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0608    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0609    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_server_2012:-:*:*:*:*:*:*:*     |            |            |            |            
+	   CVE-2020-0610    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_server_2012:-:*:*:*:*:*:*:*     |            |            |            |            
+	   CVE-2020-0611    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0612    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_server_2016:-:*:*:*:*:*:*:*     |            |            |            |            
+	   CVE-2020-0613    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0614    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0615    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0616    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:1809:*:*:*:*:*:*:*           |            |            |            |            
+	   CVE-2020-0617    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:x64:*            |            |            |            |            
+	   CVE-2020-0620    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0621    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:1709:*:*:*:*:*:*:*           |            |            |            |            
+	   CVE-2020-0622    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0623    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0624    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:1903:*:*:*:*:*:*:*           |            |            |            |            
+	   CVE-2020-0625    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0626    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0627    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0628    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0629    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0630    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0631    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0632    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0633    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:1607:*:*:*:*:*:*:*           |            |            |            |            
+	   CVE-2020-0634    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0635    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0636    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:1903:*:*:*:*:*:*:*           |            |            |            |            
+	   CVE-2020-0637    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_server_2008:r2:sp1:*:*:*:*:x64:*|            |            |            |            
+	   CVE-2020-0638    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:1709:*:*:*:*:*:*:*           |            |            |            |            
+	   CVE-2020-0639    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0641    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0642    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0643    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+	   CVE-2020-0644    | 1  | OR  | True  |cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*              |            |            |            |            
+
+Microsoft info
+CVE                 |PRODUIT                                                     |KB             |URL|Type
+   CVE-2020-0601    |Windows 10 Version 1803 for 32-bit Systems                  |    4534293    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534293|Security Update
+   CVE-2020-0601    |Windows 10 Version 1809 for 32-bit Systems                  |    4534273    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534273|Security Update
+   CVE-2020-0601    |Windows 10 Version 1709 for 32-bit Systems                  |    4534276    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534276|Security Update
+   CVE-2020-0601    |Windows 10 Version 1903 for 32-bit Systems                  |    4528760    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4528760|Security Update
+   CVE-2020-0601    |Windows 10 for 32-bit Systems                               |    4534306    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534306|Security Update
+   CVE-2020-0601    |Windows 10 Version 1607 for 32-bit Systems                  |    4534271    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534271|Security Update
+   CVE-2020-0607    |Windows 7 for 32-bit Systems Service Pack 1                 |    4534310    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534310|Monthly Rollup
+   CVE-2020-0607    |Windows 7 for 32-bit Systems Service Pack 1                 |    4534314    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534314|Security Only
+   CVE-2020-0607    |Windows 8.1 for 32-bit systems                              |    4534297    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534297|Monthly Rollup
+   CVE-2020-0607    |Windows 8.1 for 32-bit systems                              |    4534309    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534309|Security Only
+   CVE-2020-0607    |Windows Server 2012                                         |    4534283    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534283|Monthly Rollup
+   CVE-2020-0607    |Windows Server 2012                                         |    4534288    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534288|Security Only
+   CVE-2020-0608    |Windows Server 2008 for 32-bit Systems Service Pack 2       |    4534303    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534303|Monthly Rollup
+   CVE-2020-0608    |Windows Server 2008 for 32-bit Systems Service Pack 2       |    4534312    |https://catalog.update.microsoft.com/v7/site/Search.aspx?q=KB4534312|Security Only
