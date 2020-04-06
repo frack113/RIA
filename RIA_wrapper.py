@@ -1,7 +1,7 @@
 ## La gestion des wrapper Internet
 # @file RIA_wrapper.py
 # @author Frack113
-# @date 03/04/2020
+# @date 06/04/2020
 # @brief module pour les recherches Internet
 #
 # @todo traiter les New
@@ -13,6 +13,9 @@ import json
 import copy
 import os
 import shutil
+import zipfile
+import tarfile
+
 
 from RIA_sql import *
 
@@ -328,3 +331,136 @@ class C_wrapper:
         else:
             self.Check_Xen()
             self.MaBdd.set_Info_date("Xen",date)
+
+    ##
+    # @brief extrait les info CVE d'un zip
+    # @param file le nom du fichier.zip
+    # @diafile RIA_load_zip_cve.dia
+    # @todo netoyer le code
+    def Load_ZIP_cve(self,file):
+        moncve=C_cve()
+        moncpe=C_cpe()
+        archive = zipfile.ZipFile(os.path.join("nvd/", file), 'r')
+        jsonfile = archive.open(archive.namelist()[0])
+        cve_dict = json.loads(jsonfile.read())
+        for cve in cve_dict['CVE_Items']:
+            moncve.reset()
+            moncve.id=cve['cve']['CVE_data_meta']['ID']
+            if 'baseMetricV3' in cve['impact']:
+                moncve.cvssV3=cve['impact']['baseMetricV3']['cvssV3']['vectorString']
+                moncve.cvssV3base=cve['impact']['baseMetricV3']['cvssV3']['baseScore']
+            if 'baseMetricV2' in cve['impact']:
+                moncve.cvssV2=cve['impact']['baseMetricV2']['cvssV2']['vectorString']
+                moncve.cvssV2base=cve['impact']['baseMetricV2']['cvssV2']['baseScore']
+            moncve.dateOrigine=cve['publishedDate']
+            moncve.dateUpdate=cve['lastModifiedDate']
+            moncve.set_crc()
+            moncve.New=1
+            self.MaBdd.write_cve_tmp(moncve)
+            cve_node=cve['configurations']['nodes']
+            if len(cve_node)>0:
+                conf=0
+                for cpelist in cve_node:
+                    conf+=1
+                    if len(cpelist)==2:
+                        opt,dict_cpe=cpelist
+                        if dict_cpe=='cpe_match':
+                            for cpe in cpelist[dict_cpe]:
+                                moncpe.reset()
+                                moncpe.cve=moncve.id
+                                moncpe.conf=conf
+                                moncpe.operateur=cpelist.get(opt)
+                                moncpe.vulnerable=cpe['vulnerable']
+                                moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
+                                if 'versionStartExcluding' in cpe:
+                                    moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
+                                if 'versionStartIncluding' in cpe:
+                                    moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
+                                if 'versionEndExcluding' in cpe:
+                                    moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
+                                if 'versionEndIncluding' in cpe:
+                                    moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
+                                moncpe.set_crc()
+                                moncpe.New=1
+                                self.MaBdd.write_cpe_tmp(moncpe)
+                        else:
+                            child_lst=cpelist[dict_cpe]
+                            for child in child_lst:
+                                for cpe in child['cpe_match']:
+                                    moncpe.reset()
+                                    moncpe.cve=moncve.id
+                                    moncpe.conf=conf
+                                    moncpe.operateur=cpelist.get(opt)
+                                    moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
+                                    moncpe.vulnerable=cpe['vulnerable']
+                                    if 'versionStartExcluding' in cpe:
+                                        moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
+                                    if 'versionStartIncluding' in cpe:
+                                        moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
+                                    if 'versionEndExcluding' in cpe:
+                                        moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
+                                    if 'versionEndIncluding' in cpe:
+                                        moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
+                                    moncpe.set_crc()
+                                    moncpe.New=1
+                                    self.MaBdd.write_cpe_tmp(moncpe)
+
+    ##
+    # @brief Recherche regex pour Load_TAR_certfr
+    # @param regex la regex
+    # @param obj la chaine a chercher
+    # @return la string ou ''
+    def Search_re(regex,obj):
+        result=re.search(regex,obj)
+        if result:
+            return result.group(1)
+        else:
+            return ''
+
+    ##
+    # @brief extrait les info CERTFR d'un TAR
+    # @param file le nom du fichier.tar
+    # @diafile RIA_load_tar_certfr.dia
+    # @todo nettoyer le code
+    def Load_TAR_certfr(file):
+        monbul=C_certfr()
+        archive=tarfile.open(os.path.join("certfr/",file),'r')
+        for nom in archive.getnames():
+            if re.search('CERT(FR|A)\-\d+\-AVI\-\d+\.txt',nom):
+                monbul.reset()
+                bul_cve=[]
+                bultin_tar=archive.extractfile(nom).readlines()
+                bultin_list=[x.decode('utf-8') for x in bultin_tar]
+                bultin_avi=''.join(bultin_list)
+                addre='\n\nSecrétariat général de la défense et de la sécurité nationale – ANSSI – CERT-FR\n\n51, bd de La Tour-Maubourg\n75700 Paris 07 SP\n\nTél.:  +33 1 71 75 84 68\nFax:  +33 1 84 82 40 70\n\nWeb:  https://www.cert.ssi.gouv.fr\nMél:  cert-fr.cossi@ssi.gouv.fr\n'
+                bultin_avi=bultin_avi.replace(addre,'')
+                bultin_avi=re.sub('\\x0c','',bultin_avi)
+                bultin_avi=re.sub('\nPage \d+ / \d+\n','',bultin_avi)
+                monbul.link=re.findall(r'http[s]?://[^"\n]*',bultin_avi)
+                #http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0985  en http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2003-0985
+                bultin_avi=bultin_avi.replace('?name=CAN-','?name=CVE-')
+                monbul.file=re.sub('\n\n','\n',bultin_avi)
+
+                #le nom du bulletin
+                monbul.nom=Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)
+                #l'objet   du bulletin
+                monbul.obj=Search_re('Objet\:\ (.*)',monbul.file)
+                #date de creation
+                datetmp=Search_re('Date de la première version\n*(\d{1,2} \w* \d{4})',monbul.file)
+                if len(datetmp)>1:
+                    monbul.dateOrigine=datetmp
+                else:
+                    monbul.dateOrigine=Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
+                    #date de modif
+                    monbul.dateUpdate=Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)
+                    #les CVE
+                regex=re.findall('http://cve\.mitre\.org/cgi\-bin/cvename\.cgi\?name\=(CVE\-\d{4}\-\d+)',monbul.file)
+                if regex:
+                    bul_cve=regex
+                if len(bul_cve)>0:
+                    for nom_cve in bul_cve:
+                        self.MaBdd.write_certfr_cve(monbul.nom,nom_cve)
+                monbul.set_crc()
+                monbul.file=monbul.encode_file()
+                monbul.New=1
+                self.MaBdd.write_certfr_tmp(monbul)

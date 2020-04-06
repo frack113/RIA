@@ -107,7 +107,7 @@ class C_mskb:
 
     ## Verifie la mise a jour
     # @param date la date "YYYYMMDD" a verifier
-    # @retrun String d'information
+    # @return String d'information
     def Check_Mskb_Update(self,date):
         if os.path.exists('RIA_mskb.key'):
             if self.MaBdd.get_Info_date("Microsoft")==date:

@@ -3,33 +3,41 @@
 # @author Frack113
 # @date 01/04/2020
 # @brief Class pour les CERTFR,CVE et CPE
+# Objet pour manipuler les des bulletins,CVE ou CPE sans passer par le sql
+#
 
 import hashlib
 import base64
 
-## Gestion des CERTFR
+##
+# @brief Manipulation des CERTFR
+#
 class C_certfr:
+    """
+    Class qui repressente un bulletin du CERTFR
+    """
 
     ## The constructor.
     def __init__(self):
-       ## le nom du bultin
+       ## le nom du bulletin
        self.nom=""
-       ##l'objet du bultin
+       ##l'objet du bulletin
        self.obj=""
-       ##Date de creation du bultin
+       ##Date de creation du bulletin
        self.dateOrigine=""
-       ##Date de modification du bultin
+       ##Date de modification du bulletin
        self.dateUpdate=""
        ##boolean 0 deja traité , 1 nouveau
        self.New=0
-       ##Le Bultin complet
+       ##Le bulletin complet
        self.file=""
        ##Clé unique
        self.crc=""
-       ##Les liens dans le bultin
+       ##Les liens dans le bulletin
        self.link=[]
 
-    ## Remet les variables à l'état initial
+    ##
+    # @brief permet de remettre les variables à l'état initial
     def reset(self):
        self.nom=""
        self.obj=""
@@ -40,20 +48,24 @@ class C_certfr:
        self.crc=""
        self.link=[]
 
-    ## Calcul le CRC pour la clée UNIQUE SQL
+    ##
+    # @brief Calcul le CRC pour la clée UNIQUE SQL
     def set_crc(self):
         str_hkey=f"{self.nom}_{self.dateOrigine}_{self.dateUpdate}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
 
-    ## decode le fichier base64
+    ##
+    # @brief decode le fichier base64
     def decode_file(self):
         return base64.b64decode(self.file).decode()
 
-    ## encode le fichier en base64
+    ##
+    # @brief encode le fichier en base64
     def encode_file(self):
         return base64.b64encode(self.file.encode()).decode()
 
-    ## encode les liens en base64
+    ##
+    # @brief encode les liens en base64
     # surement plus utile
     def encode_link(self):
         hyrule=[]
@@ -61,7 +73,8 @@ class C_certfr:
             hyrule.append(base64.b64encode(zelda.encode()).decode())
         self.link=hyrule
 
-    ## decode les liens en base64
+    ##
+    # @brief decode les liens en base64
     # surement plus utile
     def decode_link(self):
         hyrule=[]
@@ -69,10 +82,8 @@ class C_certfr:
             hyrule.append(base64.b64decode(zelda).decode())
         self.link=hyrule
 
-
-
-
-## Gestion des CVE
+##
+# @brief manipulation des CVE
 class C_cve:
 
     ## The constructor.
@@ -96,7 +107,8 @@ class C_cve:
         ## Clé unique
         self.crc=""
 
-    ## Remet les variables à l'état initial
+    ##
+    # @brief Remet les variables à l'état initial
     def reset(self):
         self.id=""
         self.cvssV3="NA"
@@ -108,12 +120,14 @@ class C_cve:
         self.New=0
         self.crc=""
 
-    ## Calcul le CRC pour la clée UNIQUE SQL
+    ##
+    # @brief Calcul le CRC pour la clée UNIQUE SQL
     def set_crc(self):
         str_hkey=f"{self.id}_{self.cvssV3}_{self.cvssV3base}_{self.cvssV2}_{self.cvssV2base}_{self.dateOrigine}_{self.dateUpdate}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
 
-## Pour les CPE
+##
+# @brief Manipulation CPE
 class C_cpe:
 
     ## The constructor.
@@ -144,7 +158,8 @@ class C_cpe:
         ##Clé unique
         self.crc=""
 
-    ## Remet les variables à l'état initial
+    ##
+    # @brief Remet les variables à l'état initial
     def reset(self):
         self.id=""
         self.cve=""
@@ -159,7 +174,8 @@ class C_cpe:
         self.New=0
         self.crc=""
 
-    ## Calcul le CRC pour la clée UNIQUE SQL
+    ##
+    # @brief Calcul le CRC pour la clée UNIQUE SQL
     def set_crc(self):
         str_hkey=f"{self.id}_{self.cve}_{self.conf}_{self.operateur}_{self.vulnerable}_{self.cpe23Uri}_{self.versionStartExcluding}_{self.versionStartIncluding}_{self.versionEndExcluding}_{self.versionEndIncluding}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
