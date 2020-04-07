@@ -71,7 +71,7 @@ class C_wrapper:
         self.MaBdd=MaBdd
         self.MaBdd.write_sc("""
           CREATE TABLE IF NOT EXISTS URL_info (Url TEXT UNIQUE,Fichier TEXT,rep TEXT,Taille INTEGER,Date TEXT,Regex TEXT,Surl TEXT,Module TEXT,New INTEGER);
-          CREATE TABLE IF NOT EXISTS URL_cve (Url TEXT UNIQUE,CVE TEXT,Date TEXT,New INTEGER);
+          CREATE TABLE IF NOT EXISTS URL_cve (Url TEXT UNIQUE,cve_id TEXT,Date TEXT,New INTEGER);
         """)
 
     ##
@@ -96,7 +96,7 @@ class C_wrapper:
         Selectionne tous les nom_bulletin et CVE où l'URL est commune aux deux tables
         Ajoute ensuite ces informations dans la liste officiel via write_certfr_cve
         """
-        wrap_cve=self.MaBdd.get_sc('SELECT Nom,CVE FROM CERTFR_Url JOIN URL_cve WHERE CERTFR_Url.Url=URL_cve.Url;')
+        wrap_cve=self.MaBdd.get_sc('SELECT Nom,cve_id FROM CERTFR_Url JOIN URL_cve WHERE CERTFR_Url.Url=URL_cve.Url;')
         for w_cve in wrap_cve:
             self.MaBdd.write_certfr_cve(w_cve[0],w_cve[1])
 
@@ -307,6 +307,7 @@ class C_wrapper:
                 info.Module="CVE"
                 info.Rep="nvd/"
                 info.Fichier=fichier
+                info.Date="un jour au soleil"
                 info.Url="https://nvd.nist.gov/feeds/json/cve/1.1/"+fichier
             self.Url_down_file(info)
         r_feed.close()
@@ -508,7 +509,7 @@ class C_wrapper:
     # @param obj la chaine a chercher
     # @return la string ou ''
     # @details Python help
-    def Search_re(regex,obj):
+    def Search_re(self,regex,obj):
         """cherche la regex avec un group "()" dans obj
         revoie dans tous les cas un String
         """
@@ -524,7 +525,7 @@ class C_wrapper:
     # @diafile RIA_load_tar_certfr.dia
     # @todo nettoyer le code
     # @details Python help
-    def Load_TAR_certfr(file):
+    def Load_TAR_certfr(self,file):
         """Extrait toutes les informations d'un tar CERTFR
         file est avec son extension "nom_du_fichier.tar"
         """
@@ -547,17 +548,17 @@ class C_wrapper:
                 monbul.file=re.sub('\n\n','\n',bultin_avi)
 
                 #le nom du bulletin
-                monbul.nom=Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)
+                monbul.nom=self.Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)
                 #l'objet   du bulletin
-                monbul.obj=Search_re('Objet\:\ (.*)',monbul.file)
+                monbul.obj=self.Search_re('Objet\:\ (.*)',monbul.file)
                 #date de creation
-                datetmp=Search_re('Date de la première version\n*(\d{1,2} \w* \d{4})',monbul.file)
+                datetmp=self.Search_re('Date de la première version\n*(\d{1,2} \w* \d{4})',monbul.file)
                 if len(datetmp)>1:
                     monbul.dateOrigine=datetmp
                 else:
-                    monbul.dateOrigine=Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
+                    monbul.dateOrigine=self.Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
                     #date de modif
-                    monbul.dateUpdate=Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)
+                    monbul.dateUpdate=self.Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)
                     #les CVE
                 regex=re.findall('http://cve\.mitre\.org/cgi\-bin/cvename\.cgi\?name\=(CVE\-\d{4}\-\d+)',monbul.file)
                 if regex:

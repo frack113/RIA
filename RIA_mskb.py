@@ -49,7 +49,7 @@ class C_mskb:
         self.MaBdd=MaBdd
         self.MaBdd.write_sc("""
          CREATE TABLE IF NOT EXISTS MS_Product (ProductID TEXT UNIQUE NOT NULL,Value text);
-         CREATE TABLE IF NOT EXISTS MS_Vuln (CVE TEXT,FIX_ID TEXT UNIQUE,ProductID TEXT,URL TEXT,Supercedence TEXT,Type TEXT);
+         CREATE TABLE IF NOT EXISTS MS_Vuln (cve_id TEXT,FIX_ID TEXT UNIQUE,ProductID TEXT,URL TEXT,Supercedence TEXT,Type TEXT);
         """)
 
     ##
@@ -135,7 +135,7 @@ class C_mskb:
         """Revoie une liste pour un nom de bulletin données
         certfr est une string avec le nom à chercher
         """
-        return self.MaBdd.get_sc(f'select CVE,Value,FIX_ID,Url,type from MS_vuln left JOIN MS_Product ON MS_vuln.ProductID=MS_Product.ProductID WHERE MS_vuln.CVE IN (SELECT CVE from CERTFR_cve WHERE BULTIN="{certfr}");')
+        return self.MaBdd.get_sc(f'select cve_id,Value,FIX_ID,Url,type from MS_vuln left JOIN MS_Product ON MS_vuln.ProductID=MS_Product.ProductID WHERE MS_vuln.cve_id IN (SELECT cve_id from CERTFR_cve WHERE BULTIN="{certfr}");')
 
     ## Verifie la mise a jour
     # @param date la date "YYYYMMDD" a verifier

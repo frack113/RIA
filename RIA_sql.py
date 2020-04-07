@@ -32,7 +32,7 @@ class C_sql:
           CREATE TABLE IF NOT EXISTS CERTFR_Url (Nom TEXT,Url TEXT);
           CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
           CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
-          CREATE TABLE IF NOT EXISTS CERTFR_cve (Hkey TEXT UNIQUE,BULTIN text NOT NULL,CVE text);
+          CREATE TABLE IF NOT EXISTS CERTFR_cve (Hkey TEXT UNIQUE,BULTIN text NOT NULL,cve_id text);
           CREATE TABLE IF NOT EXISTS CVE (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTEGER);
           CREATE TABLE IF NOT EXISTS CVE_tmp (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTERGER);
           CREATE TABLE IF NOT EXISTS CVE_cpe (Hkey TEXT UNIQUE,cve_id TEXT,conf INTERGER,ope TEXT,vuln TEXT,cpe TEXT,versionStartExcluding TEXT,versionStartIncluding,versionEndExcluding TEXT,versionEndIncluding TEXT,New INTEGER);
@@ -206,7 +206,7 @@ class C_sql:
 
           UPDATE CVE SET New=1 WHERE cve_id IN (select cve_id FROM CVE_cpe where new=1);
           INSERT INTO CVE_tmp SELECT * FROM CVE WHERE New=1;
-          UPDATE CERTFR SET new=1 WHERE nom IN (SELECT DISTINCT BULTIN FROM CERTFR_cve JOIN CVE_tmp WHERE CERTFR_cve.CVE=CVE_tmp.cve_id);
+          UPDATE CERTFR SET new=1 WHERE nom IN (SELECT DISTINCT BULTIN FROM CERTFR_cve JOIN CVE_tmp WHERE CERTFR_cve.cve_id=CVE_tmp.cve_id);
           DELETE FROM CVE_tmp;
         """)
 
@@ -257,7 +257,7 @@ class C_sql:
         """
         all_cve=[]
         moncve=C_cve()
-        self.moncur.execute(f"SELECT DISTINCT * FROM CVE WHERE cve_id IN (SELECT CVE FROM CERTFR_cve WHERE BULTIN='{certfr}') ORDER BY cve_id;")
+        self.moncur.execute(f"SELECT DISTINCT * FROM CVE WHERE cve_id IN (SELECT cve_id FROM CERTFR_cve WHERE BULTIN='{certfr}') ORDER BY cve_id;")
         rows=self.moncur.fetchall()
         if rows:
             for row in rows:
@@ -284,7 +284,7 @@ class C_sql:
         """Donne la taille max des uri23 pour un bulletin
         certfr est une string
         """
-        self.moncur.execute(f"SELECT max(length(cpe)) FROM CVE_cpe WHERE cve_id in (SELECT CVE FROM CERTFR_cve WHERE BULTIN='{certfr}');")
+        self.moncur.execute(f"SELECT max(length(cpe)) FROM CVE_cpe WHERE cve_id in (SELECT cve_id FROM CERTFR_cve WHERE BULTIN='{certfr}');")
         return self.moncur.fetchone()[0]
 
     ##
@@ -298,7 +298,7 @@ class C_sql:
         """
         all_cpe=[]
         moncpe=C_cpe()
-        self.moncur.execute(f"SELECT DISTINCT * FROM CVE_cpe WHERE cve_id in (SELECT CVE FROM CERTFR_cve WHERE BULTIN='{certfr}') ORDER BY cve_id,conf ASC,vuln DESC;")
+        self.moncur.execute(f"SELECT DISTINCT * FROM CVE_cpe WHERE cve_id in (SELECT cve_id FROM CERTFR_cve WHERE BULTIN='{certfr}') ORDER BY cve_id,conf ASC,vuln DESC;")
         rows=self.moncur.fetchall()
         if rows:
             for row in rows:
@@ -370,7 +370,7 @@ class C_sql:
         """
         self.moncur.executescript("""
          DROP TABLE IF EXISTS CVE_BULTIN;
-         CREATE TABLE CVE_BULTIN AS SELECT CVE, group_concat(DISTINCT BULTIN) FROM CERTFR_cve GROUP BY CVE;
+         CREATE TABLE CVE_BULTIN AS SELECT cve_id, group_concat(DISTINCT BULTIN) FROM CERTFR_cve GROUP BY cve_id;
          ALTER TABLE CVE_BULTIN RENAME COLUMN 'group_concat(DISTINCT BULTIN)' TO CERTFR;
         """)
         self.moncur.execute('SELECT * FROM CVE_BULTIN;')
