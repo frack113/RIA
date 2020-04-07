@@ -1,7 +1,7 @@
 ## Gestion des CERTFR,CVE et CPE
 # @file RIA_class.py
 # @author Frack113
-# @date 01/04/2020
+# @date 07/04/2020
 # @brief Class pour les CERTFR,CVE et CPE
 # Objet pour manipuler les des bulletins,CVE ou CPE sans passer par le sql
 #
@@ -11,63 +11,81 @@ import base64
 
 ##
 # @brief Manipulation des CERTFR
-#
+# @details Python help
 class C_certfr:
-    """
-    Class qui repressente un bulletin du CERTFR
+    """Class qui repressente un bulletin du CERTFR
     """
 
-    ## The constructor.
+    ##
+    # @brief The constructor.
+    # @details Python help
     def __init__(self):
-       ## le nom du bulletin
-       self.nom=""
-       ##l'objet du bulletin
-       self.obj=""
-       ##Date de creation du bulletin
-       self.dateOrigine=""
-       ##Date de modification du bulletin
-       self.dateUpdate=""
-       ##boolean 0 deja traité , 1 nouveau
-       self.New=0
-       ##Le bulletin complet
-       self.file=""
-       ##Clé unique
-       self.crc=""
-       ##Les liens dans le bulletin
-       self.link=[]
+        """ le constructor
+        """
+        ## le nom du bulletin
+        self.nom=""
+        ##l'objet du bulletin
+        self.obj=""
+        ##Date de creation du bulletin
+        self.dateOrigine=""
+        ##Date de modification du bulletin
+        self.dateUpdate=""
+        ##boolean 0 deja traité , 1 nouveau
+        self.New=0
+        ##Le bulletin complet
+        self.file=""
+        ##Clé unique
+        self.crc=""
+        ##Les liens dans le bulletin
+        self.link=[]
 
     ##
     # @brief permet de remettre les variables à l'état initial
+    # @details Python help
     def reset(self):
-       self.nom=""
-       self.obj=""
-       self.dateOrigine=""
-       self.dateUpdate=""
-       self.New=0
-       self.file=""
-       self.crc=""
-       self.link=[]
+        """ Remet a l'état d'origine les variables
+        """
+        self.nom=""
+        self.obj=""
+        self.dateOrigine=""
+        self.dateUpdate=""
+        self.New=0
+        self.file=""
+        self.crc=""
+        self.link=[]
 
     ##
     # @brief Calcul le CRC pour la clée UNIQUE SQL
+    # @details Python help
     def set_crc(self):
+        """ calcul Hkey UNIQUE en SHA1
+        """
         str_hkey=f"{self.nom}_{self.dateOrigine}_{self.dateUpdate}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
 
     ##
     # @brief decode le fichier base64
+    # @details Python help
     def decode_file(self):
+        """Décodage de file (base64 en BDD)
+        """
         return base64.b64decode(self.file).decode()
 
     ##
     # @brief encode le fichier en base64
+    # @details Python help
     def encode_file(self):
+        """Encadage en base64 file pour le stockage en BDD
+        """
         return base64.b64encode(self.file.encode()).decode()
 
     ##
     # @brief encode les liens en base64
-    # surement plus utile
+    # @warning surement plus utile
+    # @details Python help
     def encode_link(self):
+        """Encodage des liens (base64 en BDD)
+        """
         hyrule=[]
         for zelda in self.link:
             hyrule.append(base64.b64encode(zelda.encode()).decode())
@@ -75,19 +93,29 @@ class C_certfr:
 
     ##
     # @brief decode les liens en base64
-    # surement plus utile
+    # @warning surement plus utile
+    # @details Python help
     def decode_link(self):
+        """Décodage des liens (base64 en BDD)
+        """
         hyrule=[]
         for zelda in self.link:
             hyrule.append(base64.b64decode(zelda).decode())
         self.link=hyrule
 
 ##
-# @brief manipulation des CVE
+# @brief Manipulation des CVE
+# @details Python help
 class C_cve:
+    """Class qui repressente un CVE du NIST
+    """
 
-    ## The constructor.
+    ##
+    # @brief Le constructor
+    # @details Python help
     def __init__(self):
+        """ le constructor
+        """
         ## L'id CVE
         self.id=""
         ## Le cvssV3
@@ -109,7 +137,10 @@ class C_cve:
 
     ##
     # @brief Remet les variables à l'état initial
+    # @details Python help
     def reset(self):
+        """ Remet a l'état d'origine les variables
+        """
         self.id=""
         self.cvssV3="NA"
         self.cvssV3base=0
@@ -122,16 +153,25 @@ class C_cve:
 
     ##
     # @brief Calcul le CRC pour la clée UNIQUE SQL
+    # @details Python help
     def set_crc(self):
+        """ calcul Hkey UNIQUE en SHA1
+        """
         str_hkey=f"{self.id}_{self.cvssV3}_{self.cvssV3base}_{self.cvssV2}_{self.cvssV2base}_{self.dateOrigine}_{self.dateUpdate}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()
 
 ##
 # @brief Manipulation CPE
+# @details Python help
 class C_cpe:
+    """Class qui repressente un CPE d'un CVE du NIST
+    """
 
     ## The constructor.
+    # @details Python help
     def __init__(self):
+        """ le constructor
+        """
         ## l'ID du CPE
         self.id=""
         ## Le cve de reférence
@@ -160,7 +200,10 @@ class C_cpe:
 
     ##
     # @brief Remet les variables à l'état initial
+    # @details Python help
     def reset(self):
+        """ Remet a l'état d'origine les variables
+        """
         self.id=""
         self.cve=""
         self.conf=0
@@ -176,6 +219,9 @@ class C_cpe:
 
     ##
     # @brief Calcul le CRC pour la clée UNIQUE SQL
+    # @details Python help
     def set_crc(self):
+        """ calcul Hkey UNIQUE en SHA1
+        """
         str_hkey=f"{self.id}_{self.cve}_{self.conf}_{self.operateur}_{self.vulnerable}_{self.cpe23Uri}_{self.versionStartExcluding}_{self.versionStartIncluding}_{self.versionEndExcluding}_{self.versionEndIncluding}"
         self.crc=hashlib.sha1(str_hkey.encode()).hexdigest()

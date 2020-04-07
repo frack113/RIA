@@ -1,7 +1,7 @@
-## Mon IA
+##
 # @file RIA.py
 # @author Frack113
-# @date 01/04/2020
+# @date 07/04/2020
 # @brief Recherche d'Information Automatisée
 # @todo utiliser les best practice Python
 #
@@ -29,7 +29,8 @@ from RIA_sql import *
 from RIA_mskb import *
 from RIA_wrapper import *
 
-## Affiche simplement le credit
+##
+#@brief Affiche simplement le credit
 def credit():
     mon_credit="""
                              ____ ____ ____
@@ -110,7 +111,7 @@ def Write_CERTFR(nom,annee):
     bultin_avi=cert.decode_file()
     reponse.append(bultin_avi)
     reponse.append('----------------------------------------')
-    reponse.append('-------------- RIA By HBT --------------')
+    reponse.append('----------- RIA By Frack113 ------------')
     reponse.append('----------------------------------------')
     CERT_to_STR(nom,reponse)
     MS_to_STR(nom,reponse)
@@ -147,7 +148,7 @@ def URI_to_FILE(Nom,uri):
 
 ## Core du scripts
 # @brief le coeur du scripts
-# @todo simplifier les repetition wrapper
+# @todo simplifier les repetitions
 def mon_script():
     global MaBdd
     global Ksoft
@@ -208,14 +209,15 @@ def mon_script():
     updates=Wrapper.Read_wrapper_info("Module","CVE",True,True)
     logging.info("Update CVE : "+str(len(updates)))
     for update in updates:
-        Wrapper.load_zip_cve(update.Fichier)
+        Wrapper.Load_ZIP_cve(update.Fichier)
         logging.warning(update.Fichier+ " mis a jour")
 
     MaBdd.flush_tmp()
     MaBdd.save_db()
 
 #       Pour verifier la sortie sans avoir de mise a jour :)
-#MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
+    #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
+    #MaBdd.write_sc("UPDATE CERTFR SET New=1 ;")
 
     print("Traite les mises a jour de bulletin")
     rows=MaBdd.get_all_new_certfr()
@@ -264,5 +266,6 @@ def mon_script():
     print("Bye Bye")
     logging.info('fin de traitement')
 
-#main a cause de Doxygen pour la docs
+##
+# Brief A cause de Doxygen pour la docs
 mon_script()
