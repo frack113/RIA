@@ -25,11 +25,11 @@ class C_sql:
         ## le curseur dans la Bdd
         self.moncur=self.Localdb.cursor()
         self.moncur.executescript("""
-          PRAGMA journal_mode = 'OFF';
+          PRAGMA journal_mode = 'MEMORY';
           PRAGMA secure_delete = '0';
           PRAGMA temp_store = '2';
           CREATE TABLE IF NOT EXISTS Info (Quoi TEXT UNIQUE,Date TEXT);
-          CREATE TABLE IF NOT EXISTS CERTFR_Url (Nom TEXT,Url TEXT);
+          CREATE TABLE IF NOT EXISTS CERTFR_Url (Nom TEXT,Url TEXT,New INTEGER);
           CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
           CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
           CREATE TABLE IF NOT EXISTS CERTFR_cve (Hkey TEXT UNIQUE,BULTIN text NOT NULL,cve_id text);
@@ -135,9 +135,17 @@ class C_sql:
         Ecrit les liens dans la table CERTFR_Url
         monbul est un C_certfr
         """
-        self.moncur.execute(f'INSERT INTO CERTFR_tmp VALUES("{monbul.crc}","{monbul.nom}","{monbul.obj}","{monbul.dateOrigine}","{monbul.dateUpdate}",{monbul.New},"{monbul.file}");')
+        self.moncur.execute(f'''INSERT INTO CERTFR_tmp VALUES(
+            "{monbul.crc}",
+            "{monbul.nom}",
+            "{monbul.obj}",
+            "{monbul.dateOrigine}",
+            "{monbul.dateUpdate}",
+            {monbul.New},
+            "{monbul.file}"
+            );''')
         for url in monbul.link:
-            self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_Url VALUES("{monbul.nom}","{url}");')
+            self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_Url VALUES("{monbul.nom}","{url}",1);')
 
     ##
     # @brief Ecrit en BDD un binône CERTFR/CVE
@@ -187,27 +195,49 @@ class C_sql:
          4 efface les tables temporaires
         """
         self.moncur.executescript("""
-          UPDATE CERTFR SET New=0;
           DELETE FROM CERTFR_tmp WHERE Hkey IN (SELECT Hkey FROM CERTFR);
           DELETE FROM CERTFR WHERE nom IN (SELECT nom FROM CERTFR_tmp);
           INSERT INTO CERTFR SELECT * FROM CERTFR_tmp;
           DELETE FROM CERTFR_tmp;
 
-          UPDATE CVE SET New=0;
           DELETE FROM CVE_tmp WHERE hkey in (SELECT DISTINCT Hkey FROM CVE);
           DELETE FROM CVE WHERE cve_id IN (SELECT cve_id FROM CVE_tmp);
           INSERT OR replace INTO CVE SELECT * from CVE_tmp;
           DELETE FROM CVE_tmp;
 
-          UPDATE CVE_cpe SET New=0;
           DELETE FROM CVE_cpe_tmp WHERE hkey in (SELECT DISTINCT Hkey FROM CVE_cpe);
           INSERT OR replace INTO CVE_cpe SELECT * from CVE_cpe_tmp;
           DELETE FROM CVE_cpe_tmp;
 
-          UPDATE CVE SET New=1 WHERE cve_id IN (select cve_id FROM CVE_cpe where new=1);
+          UPDATE CVE SET New=1 WHERE cve_id IN (select cve_id FROM CVE_cpe where New=1);
           INSERT INTO CVE_tmp SELECT * FROM CVE WHERE New=1;
-          UPDATE CERTFR SET new=1 WHERE nom IN (SELECT DISTINCT BULTIN FROM CERTFR_cve JOIN CVE_tmp WHERE CERTFR_cve.cve_id=CVE_tmp.cve_id);
+          UPDATE CERTFR SET New=1 WHERE nom IN (SELECT DISTINCT BULTIN FROM CERTFR_cve JOIN CVE_tmp WHERE CERTFR_cve.cve_id=CVE_tmp.cve_id);
           DELETE FROM CVE_tmp;
+        """)
+
+    ##
+    # @brief Cherche toutes CERTFR mis a jour par les URL
+    # @details Python help
+    def flush_url(self):
+        """ Mise a jour du champ New des CERTFR par rapport au wrapper URL
+        1 URL_info(wrapper URL) vers CERTFR_Url (wrapper CERTFR)
+        2 CERTFR_Url vers CERTFR
+        3 URL_cve (wrapper URL) vers CVE (wrapper NIST CVE)
+        4 CVE vers CERTFR
+        """
+        self.moncur.executescript("""
+            UPDATE CERTFR_Url SET New=1 WHERE Url in (SELECT Url from URL_info WHERE New=1);
+            UPDATE URL_info SET New=0;
+
+            UPDATE CERTFR SET new=1 WHERE nom IN (SELECT DISTINCT Nom FROM CERTFR_URL WHERE New=1);
+            UPDATE CERTFR_URL SET New=0;
+
+            UPDATE CVE SET New=1 WHERE cve_id IN (SELECT DISTINCT cve_id FROM URL_cve WHERE New=1);
+            UPDATE URL_cve SET New=0;
+
+            INSERT INTO CVE_tmp SELECT * FROM CVE WHERE New=1;
+            UPDATE CERTFR SET new=1 WHERE nom IN (SELECT DISTINCT BULTIN FROM CERTFR_cve JOIN CVE_tmp WHERE CERTFR_cve.cve_id=CVE_tmp.cve_id);
+            DELETE FROM CVE_tmp;
         """)
 
 
@@ -384,6 +414,17 @@ class C_sql:
         """ Renvoie une liste de tous les bulletin et Objet sans CVE
         """
         self.moncur.execute("SELECT Nom,Obj FROM CERTFR WHERE Nom NOT IN (SELECT DISTINCT BULTIN FROM CERTFR_cve);")
+        return self.moncur.fetchall()
+
+    ##
+    # @brief Les CVE non present sur le NIST
+    # @return liste ou []
+    # @details Python help
+    def get_all_cve_orphan(self):
+        """ Renvoie une liste de tous les CVE des bulletins non present sur le nist
+        Soit ils sont pas encore valide soit le CERTFR a mal formater son bulletin
+        """
+        self.moncur.execute("SELECT DISTINCT cve_id FROM CERTFR_cve WHERE cve_id NOT IN (SELECT DISTINCT cve_id from CVE);")
         return self.moncur.fetchall()
 
     ##

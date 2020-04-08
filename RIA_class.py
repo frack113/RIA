@@ -127,7 +127,7 @@ class C_cve:
         ## La note de base cvssV2
         self.cvssV2base=0
         ## La date de creation du CVE
-        self.dateOrigine=""
+        self.dateOrigine="0000-00-00T00:00Z"
         ## La date derniere modification du CVE
         self.dateUpdate=""
         ## boolean 0 deja traité , 1 nouveau

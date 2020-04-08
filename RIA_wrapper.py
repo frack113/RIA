@@ -1,10 +1,9 @@
 ## La gestion des wrapper Internet
 # @file RIA_wrapper.py
 # @author Frack113
-# @date 06/04/2020
+# @date 08/04/2020
 # @brief module pour les recherches Internet
 #
-# @todo traiter les New
 
 import requests
 import re
@@ -89,7 +88,6 @@ class C_wrapper:
 
     ##
     # @brief Sauvegarde tous les couples Url/CVE trouvés
-    # @todo traite que les New
     # @details Python help
     def Flush_cve(self):
         """Transfert de la table TMP vers la table normale
@@ -108,7 +106,11 @@ class C_wrapper:
         """Insert en BDD
         info est une liste [nom du bulletin,nom du CVE, date]
         """
-        self.MaBdd.write_sc(f'INSERT OR REPLACE INTO URL_cve VALUES("{info[0]}","{info[1]}","{info[2]}",1)')
+        self.MaBdd.write_sc(f'''INSERT OR REPLACE INTO URL_cve VALUES(
+         "{info[0]}",
+         "{info[1]}",
+         "{info[2]}",
+         1);''')
 
     ##
     # @brief Sauvegarde en BDD un objet C_wrapper_info
@@ -205,7 +207,6 @@ class C_wrapper:
         """
         h_web=requests.head(info.Url)
         date=h_web.headers['Last-Modified']
-        print("url_is_update : "+date)
         h_web.close()
         reponse=self.Read_wrapper_info("Url",info.Url,True,False)
         if reponse :
@@ -228,7 +229,6 @@ class C_wrapper:
             - parse les sous-pages pour les CVE
         """
         if self.Url_is_updated(info):
-            print ("info.Url : "+info.Url)
             r_web= requests.get(info.Url)
             if r_web.ok:
                 info.Date=r_web.headers['Last-Modified']
@@ -238,7 +238,6 @@ class C_wrapper:
                 feed=re.findall(info.Regex,r_web.text)
                 for url in feed:
                     full_url=info.S_Url+url
-                    print ("full_url : "+full_url)
                     if full_url[-1]=='/':
                         pass #rien a faire
                     else:
@@ -252,7 +251,7 @@ class C_wrapper:
                         try:
                             feed_web=requests.get(full_url,{"Connection": "close"})
                         except:
-                            print ("trop de connection sur le serveur distant")
+                            print ("Every Breaking Wave, trop de connection")
                             break
                         if feed_web.ok:
                             l_info.Date=feed_web.headers['Last-Modified']
@@ -395,6 +394,42 @@ class C_wrapper:
                 self.write_url_cve(c_info)
 
     ##
+    # @brief Verifie Redhat
+    # @details Python help
+    def Check_Redhat(self):
+        """Verifie les CVRFs de RedHat via API
+        """
+        inf=C_wrapper_info()
+        api_url='https://access.redhat.com/hydra/rest/securitydata'
+        base_url='https://access.redhat.com/errata/'
+        inf.Module='Redhat'
+        inf.New=1
+        page=1
+        self.Write_wrapper_info(inf)
+        is_next=True
+        while is_next:
+            endpoint = '/cvrf.json'
+            param='page='+str(page)
+            url=api_url+endpoint+"?"+param
+            rha=requests.get(url)
+            if rha.status_code==200:
+                if rha.json():
+                    inf.Date=rha.headers['Date']
+                    data=rha.json()
+                    for cvrf in data:
+                        inf.Url=base_url+cvrf['RHSA']
+                        self.Write_wrapper_info(inf)
+                        c_info=[inf.Url,"",inf.Date]
+                        for cve in cvrf['CVEs']:
+                            c_info[1]=cve
+                            self.write_url_cve(c_info)
+                    page=page+1
+                else:
+                    is_next=False
+            else:
+                is_next=False
+    
+    ##
     # Vérifie tous les editeurs en une seule fonction
     # @param date la date "YYYYMMDD" a verifier
     # @details Python help
@@ -425,6 +460,13 @@ class C_wrapper:
         else:
             self.Check_Xen()
             self.MaBdd.set_Info_date("Xen",date)
+
+        if self.MaBdd.get_Info_date("Redhat")== date:
+            pass
+        else:
+            self.Check_Redhat()
+            self.MaBdd.set_Info_date("Redhat",date)
+
 
     ##
     # @brief extrait les info CVE d'un zip

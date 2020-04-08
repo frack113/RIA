@@ -177,6 +177,8 @@ def mon_script():
         dest = shutil.copyfile('RIA_init.db','RIA.db')
 
     MaBdd=C_sql()
+    MaBdd.clean_new()
+    MaBdd.clean_tmp()
 
     if os.path.exists('RIA_mogs.txt'):
         logging.info("Traitement de l'aide des mogs")
@@ -212,8 +214,21 @@ def mon_script():
         Wrapper.Load_ZIP_cve(update.Fichier)
         logging.warning(update.Fichier+ " mis a jour")
 
+    cves=MaBdd.get_all_cve_orphan()
+    if cves:
+        logging.info(str(len(cves))+" CVE non present sur le NIST cré(s)")
+        moncve=C_cve()
+        moncve.New=1
+        for strcve in cves:
+            moncve.id=strcve[0]
+            moncve.set_crc()
+            MaBdd.write_cve_tmp(moncve)
+
+    # On sauvegarde le tout
     MaBdd.flush_tmp()
+    MaBdd.flush_url()
     MaBdd.save_db()
+
 
 #       Pour verifier la sortie sans avoir de mise a jour :)
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
