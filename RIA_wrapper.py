@@ -14,6 +14,7 @@ import os
 import shutil
 import zipfile
 import tarfile
+import time
 
 
 from RIA_sql import *
@@ -28,7 +29,7 @@ class C_wrapper_info:
     ##
     # @brief le constructor
     # @details Python help
-    def __init__(self):
+    def __init__ (self):
         """constructor
         """
         ## L'url
@@ -60,7 +61,7 @@ class C_wrapper:
     ## constructors
     # @param MaBdd C_sql
     # @details Python help
-    def __init__(self,MaBdd):
+    def __init__ (self,MaBdd):
         """le constructor
         MaBdd est un C_sql déjà ouvert
         On ajoute les tables SQL spécifiques
@@ -76,7 +77,7 @@ class C_wrapper:
     ##
     # @brief remet a 0 le champ New
     # @details Python help
-    def Reset_New(self):
+    def Reset_New (self):
         """Met a 0 le champ New en BDD
         """
         self.MaBdd.write_sc('UPDATE URL_info SET New=0;')
@@ -89,7 +90,7 @@ class C_wrapper:
     ##
     # @brief Sauvegarde tous les couples Url/CVE trouvés
     # @details Python help
-    def Flush_cve(self):
+    def Flush_cve (self):
         """Transfert de la table TMP vers la table normale
         Selectionne tous les nom_bulletin et CVE où l'URL est commune aux deux tables
         Ajoute ensuite ces informations dans la liste officiel via write_certfr_cve
@@ -102,7 +103,7 @@ class C_wrapper:
     # @brief Sauvegarde dans URL_ck
     # @param info liste
     # @details Python help
-    def write_url_cve(self,info):
+    def write_url_cve (self,info):
         """Insert en BDD
         info est une liste [nom du bulletin,nom du CVE, date]
         """
@@ -116,7 +117,7 @@ class C_wrapper:
     # @brief Sauvegarde en BDD un objet C_wrapper_info
     # @param info C_wrapper_info
     # @details Python help
-    def Write_wrapper_info(self,info):
+    def Write_wrapper_info (self,info):
         """Insert en BDD
         info est un C_wrapper_info
         """
@@ -139,7 +140,7 @@ class C_wrapper:
     # @param New True ajoute " AND New=1;" a la recherche sql
     # @return Une liste de C_wrapper_info
     # @details Python help
-    def Read_wrapper_info(self,Champ,value,strict,New):
+    def Read_wrapper_info (self,Champ,value,strict,New):
         """Lit une liste de C_wrapper_info depuis la Bdd
         Strict(Boolean) permet de choisir entre une recherche '=' ou 'like'
         New(Boolean) permet de choisir que les New=1 ou pas
@@ -175,7 +176,7 @@ class C_wrapper:
     # @brief Télécharge un fichiers si plus récent
     # @param info C_wrapper_info
     # @details Python help
-    def Url_down_file(self,info):
+    def Url_down_file (self,info):
         """Télécharge un fichier s'il est plus rencent
         - vérifie la date du header vis a vis de la Bdd
         - télécharge le fichiers
@@ -201,7 +202,7 @@ class C_wrapper:
     # @param info le C_wrapper_info a verifier
     # @return Boolean
     # @details Python help
-    def Url_is_updated(self,info):
+    def Url_is_updated (self,info):
         """vérifie si le 'Last-Modified' est different de la Bdd.
         Si l'URL n'est pas en BDD revoie True
         """
@@ -220,15 +221,19 @@ class C_wrapper:
     ##
     # @brief Parse une url en regex
     # @param info Un C_wrapper_info
+    # @return Boolean
     # @details Python help
-    def check_regex(self,info):
+    def check_regex (self,info):
         """check_regex permet de parcourir une page unique avec des liens
         info doit être un C_wrapper_info
             - Lit la page Url
             - cherche chaque sous-page avec le Regex
             - parse les sous-pages pour les CVE
+        revoie True sinon False si erreur
         """
-        if self.Url_is_updated(info):
+        if self.Url_is_updated (info):
+            #modu=bdd.get_sc(f"select Url from URL_info  where module='{info.module}';")
+            #all_url=[url[0] for url in modu]
             r_web= requests.get(info.Url)
             if r_web.ok:
                 info.Date=r_web.headers['Last-Modified']
@@ -242,7 +247,7 @@ class C_wrapper:
                         pass #rien a faire
                     else:
                         full_url=full_url+'/'
-                        l_info.Url=full_url
+                    l_info.Url=full_url
                     c_info=self.Read_wrapper_info("Url",full_url,True,False)
                     if c_info:
                         pass #sous page deja traitée
@@ -251,9 +256,16 @@ class C_wrapper:
                         try:
                             feed_web=requests.get(full_url,{"Connection": "close"})
                         except:
-                            print ("Every Breaking Wave, trop de connection")
-                            break
+                            print (l_info.Module+" : Every Breaking Wave, trop de connection")
+                            info.Date="break"
+                            self.Write_wrapper_info(info)
+                            self.MaBdd.save_db()
+                            r_web.close()
+                            feed_web.close()
+                            time.sleep(10)
+                            return False
                         if feed_web.ok:
+                            #print("traite :"+l_info.Url)
                             l_info.Date=feed_web.headers['Last-Modified']
                             self.Write_wrapper_info(l_info)
                             all_cve=re.findall('CVE-\d+-\d+',feed_web.text)
@@ -263,6 +275,7 @@ class C_wrapper:
                                 self.write_url_cve(c_info)
                         feed_web.close()
             r_web.close()
+            return True
 
 #
 #                   Partie wrapper une fonction par editeur
@@ -271,7 +284,7 @@ class C_wrapper:
     # @brief Télécharge les Tar CERTFR si plus récent
     # @param EndDate l'année de fin int(YYYY)
     # @details Python help
-    def Download_Certfr(self,EndDate):
+    def Download_Certfr (self,EndDate):
         """Télécharge les fichiers année.tar du CERTFR
         EndDate est l'année en cours
         """
@@ -292,7 +305,7 @@ class C_wrapper:
     ##
     # @brief Télécharge les ZIP CVE NIST si plus récent
     # @details Python help
-    def Download_CVE(self):
+    def Download_CVE (self):
         """Télécharge les fichiers nvdcve-1.1-année.zip du NIST
         """
         info=C_wrapper_info()
@@ -314,7 +327,7 @@ class C_wrapper:
     ##
     # @brief Verifie les release de la page about.gitlab.com
     # @details Python help
-    def Check_Gitlab(self):
+    def Check_Gitlab (self):
         """Verifie les release de la page about.gitlab.com
         """
         inf=C_wrapper_info()
@@ -322,24 +335,28 @@ class C_wrapper:
         inf.Module="Gitlab"
         inf.Regex=r'<a class=cover href=\'(/releases/\d{4}/\d{2}/\d{2}/.*-released/)\''
         inf.S_Url='https://about.gitlab.com'
-        self.check_regex(inf)
+        good=False
+        while not good :
+            good=self.check_regex(inf)
 
     ##
     # @brief Verifie les release de la page https://usn.ubuntu.com/months/
     # @details Python help
-    def Check_Ubuntu(self):
+    def Check_Ubuntu (self):
         """Verifie les release de la page https://usn.ubuntu.com/months/
         """
         inf=C_wrapper_info()
         inf.Url='https://usn.ubuntu.com/months/'
         inf.Module='Ubuntu'
         inf.Regex=r'https://usn.ubuntu.com/\d+-\d+/'
-        self.check_regex(inf)
+        good=False
+        while not good :
+            good=self.check_regex(inf)
 
     ##
     # @brief Verifie Kaspersky
     # @details Python help
-    def Check_Kaspersky(self):
+    def Check_Kaspersky (self):
         """Vérifie les mise à jour kaspersky
         On utilise BeautifulSoup pour la page aspx
         """
@@ -369,7 +386,7 @@ class C_wrapper:
     ##
     # @brief Verifie Xen
     # @details Python help
-    def Check_Xen(self):
+    def Check_Xen (self):
         """Verifie le JSON de Xen
         """
         inf=C_wrapper_info()
@@ -396,9 +413,11 @@ class C_wrapper:
     ##
     # @brief Verifie Redhat
     # @details Python help
-    def Check_Redhat(self):
+    def Check_Redhat (self):
         """Verifie les CVRFs de RedHat via API
         """
+        modu=self.MaBdd.get_sc(f"select Url from URL_info  where module='Redhat';")
+        all_url=[url[0] for url in modu]
         inf=C_wrapper_info()
         api_url='https://access.redhat.com/hydra/rest/securitydata'
         base_url='https://access.redhat.com/errata/'
@@ -418,22 +437,25 @@ class C_wrapper:
                     data=rha.json()
                     for cvrf in data:
                         inf.Url=base_url+cvrf['RHSA']
-                        self.Write_wrapper_info(inf)
-                        c_info=[inf.Url,"",inf.Date]
-                        for cve in cvrf['CVEs']:
-                            c_info[1]=cve
-                            self.write_url_cve(c_info)
+                        if inf.Url in all_url:
+                            pass #deja dans la Bdd
+                        else:
+                            self.Write_wrapper_info(inf)
+                            c_info=[inf.Url,"",inf.Date]
+                            for cve in cvrf['CVEs']:
+                                c_info[1]=cve
+                                self.write_url_cve(c_info)
                     page=page+1
                 else:
                     is_next=False
             else:
                 is_next=False
-    
+
     ##
     # Vérifie tous les editeurs en une seule fonction
     # @param date la date "YYYYMMDD" a verifier
     # @details Python help
-    def Check_ALL_Wapper_Update(self,date):
+    def Check_ALL_Wapper_Update (self,date):
         """lance tous les wrapper en une seule fonction
         cela evite de devoir modifier RIA.py si l'on rajoute un nouveau.
         """
@@ -474,7 +496,7 @@ class C_wrapper:
     # @diafile RIA_load_zip_cve.dia
     # @todo netoyer le code
     # @details Python help
-    def Load_ZIP_cve(self,file):
+    def Load_ZIP_cve (self,file):
         """Extrait toutes les informations d'un zip CVE nist
         file est avec son extension "nom_du_fichier.zip"
         """
@@ -551,7 +573,7 @@ class C_wrapper:
     # @param obj la chaine a chercher
     # @return la string ou ''
     # @details Python help
-    def Search_re(self,regex,obj):
+    def Search_re (self,regex,obj):
         """cherche la regex avec un group "()" dans obj
         revoie dans tous les cas un String
         """
@@ -567,7 +589,7 @@ class C_wrapper:
     # @diafile RIA_load_tar_certfr.dia
     # @todo nettoyer le code
     # @details Python help
-    def Load_TAR_certfr(self,file):
+    def Load_TAR_certfr (self,file):
         """Extrait toutes les informations d'un tar CERTFR
         file est avec son extension "nom_du_fichier.tar"
         """

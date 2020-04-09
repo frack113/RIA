@@ -14,7 +14,7 @@ class C_sql:
     ##
     # @brief constructors
     # @details Python help
-    def __init__(self):
+    def __init__ (self):
         """ le constructor
         on utilise PRAGMA pour optimiser les écritures
         ouvre le ficier RIA.db
@@ -42,7 +42,7 @@ class C_sql:
     ##
     # @brief fermeture
     # @details Python help
-    def close_db(self):
+    def close_db (self):
         """ fonction de sauvegarde et fermeture
         """
         self.moncur.execute('PRAGMA integrity_check;')
@@ -53,7 +53,7 @@ class C_sql:
     ##
     # @brief Sauvegarde
     # @details Python help
-    def save_db(self):
+    def save_db (self):
         """ fonction de sauvegarde des transactions en cours
         """
         self.Localdb.commit()
@@ -78,7 +78,7 @@ class C_sql:
     # @param quoi  le champ
     # @param date  la date
     # @details Python help
-    def set_Info_date(self,quoi,date):
+    def set_Info_date (self,quoi,date):
         """ Sauvegarde la date pour quoi dans la table Info
         """
         self.moncur.execute(f'INSERT OR REPLACE INTO Info VALUES("{quoi}","{date}");')
@@ -86,7 +86,7 @@ class C_sql:
     ##
     # @brief efface les tables temporaires
     # @details Python help
-    def clean_tmp(self):
+    def clean_tmp (self):
         """Efface les tables temporaires CERTFR_tmp,CVE_tmp et CVE_cpe_tmp
         """
         self.moncur.executescript("""
@@ -98,7 +98,7 @@ class C_sql:
     ##
     # @brief Mets New à "0"
     # @details Python help
-    def clean_new(self):
+    def clean_new (self):
         """ Met à 0 le champ New pour CERTFR,CVE et CVE_cpe
         """
         self.moncur.executescript("""
@@ -110,7 +110,7 @@ class C_sql:
     # @brief Execute un script sqlite sans retour
     # @param script le sql
     # @details Python help
-    def write_sc(self,script):
+    def write_sc (self,script):
         """Execute le "script" SQL sans retour
         """
         self.moncur.executescript(script)
@@ -120,7 +120,7 @@ class C_sql:
     # @param script le sql
     # @return une liste
     # @details Python help
-    def get_sc(self,script):
+    def get_sc (self,script):
         """ Execute le "script" SQL et renvoe une liste de tous les resultats
         """
         self.moncur.execute(script)
@@ -130,7 +130,7 @@ class C_sql:
     # @brief Ecrit en BDD un bulletin
     # @param monbul un C_certfr
     # @details Python help
-    def write_certfr_tmp(self,monbul):
+    def write_certfr_tmp (self,monbul):
         """ Ecrit dans la table CERTFR_tmp un bulletin
         Ecrit les liens dans la table CERTFR_Url
         monbul est un C_certfr
@@ -153,7 +153,7 @@ class C_sql:
     # @param certfr nom du bulletin
     # @param cve non du cve
     # @details Python help
-    def write_certfr_cve(self,certfr,cve):
+    def write_certfr_cve (self,certfr,cve):
         """ Ecrit en BDD un CVE dans la table CERTFR_tmp
         calcul la Hkey UNIQUE
         """
@@ -164,7 +164,7 @@ class C_sql:
     # @brief Ecrit en BDD un CVE
     # @param moncve un C_cve
     # @details Python help
-    def write_cve_tmp(self,moncve):
+    def write_cve_tmp (self,moncve):
         """Ecrit en BDD un CVE dans la table CVE_tmp
         moncve est un C_cve
         """
@@ -174,7 +174,7 @@ class C_sql:
     # @brief Ecrit en BDD un cpe
     # @param moncpe un C_cpe
     # @details Python help
-    def write_cpe_tmp(self,moncpe):
+    def write_cpe_tmp (self,moncpe):
         """ Ecrit en BDD un cpe dans la table CVE_cpe_tmp
         moncpe est un C_cpe
         """
@@ -183,7 +183,7 @@ class C_sql:
     ##
     # @brief Tranfert les table tmp vers les main
     # @details Python help
-    def flush_tmp(self):
+    def flush_tmp (self):
         """ Transfert les données de
             CERTFR_tmp vers CERTFR
             CVE_tmp vers CVE
@@ -218,7 +218,7 @@ class C_sql:
     ##
     # @brief Cherche toutes CERTFR mis a jour par les URL
     # @details Python help
-    def flush_url(self):
+    def flush_url (self):
         """ Mise a jour du champ New des CERTFR par rapport au wrapper URL
         1 URL_info(wrapper URL) vers CERTFR_Url (wrapper CERTFR)
         2 CERTFR_Url vers CERTFR
@@ -245,7 +245,7 @@ class C_sql:
     # @brief Revoie tous les bulletins mis a jour
     # @return liste
     # @details Python help
-    def get_all_new_certfr(self):
+    def get_all_new_certfr (self):
         """ renvoie tous un liste de tous les nom de bulletin avec New=1
         """
         self.moncur.execute("SELECT Nom FROM CERTFR WHERE New=1;")
@@ -256,7 +256,7 @@ class C_sql:
     # @param nom
     # @return C_certfr
     # @details Python help
-    def get_certfr(self,nom):
+    def get_certfr (self,nom):
         """ lit un bulletin dont le Nom ="nom"
         nom est une String
         renvoie un C_certfr (vide si pas trouvé en BDD)
@@ -281,7 +281,7 @@ class C_sql:
     # @param certfr nom du bulletins
     # @return liste de C_cve ou une liste vide
     # @details Python help
-    def get_all_cve_certfr(self,certfr):
+    def get_all_cve_certfr (self,certfr):
         """Renvoie tous les CVE d'un bulletin ou une liste vide
         certfr est un string
         """
@@ -310,7 +310,7 @@ class C_sql:
     # @return la taille (nb de carractére)
     # @todo gérer les erreurs
     # @details Python help
-    def get_max_lg_uri_cpe(self,certfr):
+    def get_max_lg_uri_cpe (self,certfr):
         """Donne la taille max des uri23 pour un bulletin
         certfr est une string
         """
@@ -322,7 +322,7 @@ class C_sql:
     # @param certfr nom du bulletins
     # @return liste de C_cpe ou None
     # @details Python help
-    def get_all_cpe_certfr(self,certfr):
+    def get_all_cpe_certfr (self,certfr):
         """Renvoie une liste de C_cpe pour pour un bulletin
         certfr est une string
         """
@@ -352,7 +352,7 @@ class C_sql:
     # @param uri une partie d'uri a chercher
     # @return liste de C_cpe ou None
     # @details Python help
-    def get_all_cpe_uri(self,uri):
+    def get_all_cpe_uri (self,uri):
         """Renvoie tous les cpe pour un uri23
         recherche sql like %uri%
         uri est une String
@@ -383,7 +383,7 @@ class C_sql:
     # @param obj chaine a chercher
     # @return liste ou []
     # @details Python help
-    def get_orphan_by_obj(self,obj):
+    def get_orphan_by_obj (self,obj):
         """Renvoie un liste des nom de bulletin et objet sans CVE
          obj chaine a chercher dans les objet des bulletins
          utilise la fonction SQL LIKE
@@ -395,7 +395,7 @@ class C_sql:
     # @brief Les bulletin par CVE
     # @return liste ou []
     # @details Python help
-    def get_all_certfr_by_cve(self):
+    def get_all_certfr_by_cve (self):
         """Renvoie une liste de tous les couples CVE/Bulletins
         """
         self.moncur.executescript("""
@@ -410,7 +410,7 @@ class C_sql:
     # @brief Bulletin par obj sans CVE
     # @return liste ou []
     # @details Python help
-    def get_all_orphan(self):
+    def get_all_orphan (self):
         """ Renvoie une liste de tous les bulletin et Objet sans CVE
         """
         self.moncur.execute("SELECT Nom,Obj FROM CERTFR WHERE Nom NOT IN (SELECT DISTINCT BULTIN FROM CERTFR_cve);")
@@ -420,7 +420,7 @@ class C_sql:
     # @brief Les CVE non present sur le NIST
     # @return liste ou []
     # @details Python help
-    def get_all_cve_orphan(self):
+    def get_all_cve_orphan (self):
         """ Renvoie une liste de tous les CVE des bulletins non present sur le nist
         Soit ils sont pas encore valide soit le CERTFR a mal formater son bulletin
         """
@@ -430,7 +430,7 @@ class C_sql:
     ##
     # @brief Charge en BDD les couples CERTFR;CVE trouvés manuellement
     # @details Python help
-    def load_mogs(self):
+    def load_mogs (self):
         """ Charge en BDD les couples CERTFR;CVE trouvés manuellement
         les informations sont dans 'RIA_mogs.txt'
         1 ligne par CERTFR;CVE

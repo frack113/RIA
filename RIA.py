@@ -60,7 +60,6 @@ def credit():
 # @brief Une jolie sortie formater des info CERTFR
 # @param Nom le nom du bulletin
 # @param tab une liste
-# @return None
 def CERT_to_STR(Nom,tab):
     allcve=MaBdd.get_all_cve_certfr(Nom)
     if allcve:
@@ -88,7 +87,6 @@ def CERT_to_STR(Nom,tab):
 # @brief Une jolie sortie formater des info Microsoft
 # @param Nom le nom du bulletin
 # @param tab une liste
-# @return None
 def MS_to_STR(Nom,tab):
     allcve=Ksoft.get_info_certfr(Nom)
     if allcve:
@@ -236,6 +234,7 @@ def mon_script():
 
     print("Traite les mises a jour de bulletin")
     rows=MaBdd.get_all_new_certfr()
+    logging.info("Get_all_new_certfr :"+str(len(rows)))
     pbar = tqdm(total=len(rows),ascii=True,desc="Bulletin")
     for bul in rows:
         pbar.update(1)
