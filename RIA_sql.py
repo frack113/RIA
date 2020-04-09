@@ -1,6 +1,7 @@
 from  RIA_class import *
 import sqlite3
 import copy
+import hashlib
 
 ## La gestion de la base de données
 # @file RIA_sql.py
@@ -29,7 +30,7 @@ class C_sql:
           PRAGMA secure_delete = '0';
           PRAGMA temp_store = '2';
           CREATE TABLE IF NOT EXISTS Info (Quoi TEXT UNIQUE,Date TEXT);
-          CREATE TABLE IF NOT EXISTS CERTFR_Url (Nom TEXT,Url TEXT,New INTEGER);
+          CREATE TABLE IF NOT EXISTS CERTFR_Url (Hkey TEXT UNIQUE,Nom TEXT,Url TEXT,New INTEGER);
           CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
           CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
           CREATE TABLE IF NOT EXISTS CERTFR_cve (Hkey TEXT UNIQUE,BULTIN text NOT NULL,cve_id text);
@@ -145,7 +146,9 @@ class C_sql:
             "{monbul.file}"
             );''')
         for url in monbul.link:
-            self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_Url VALUES("{monbul.nom}","{url}",1);')
+            str_hkey=f'{monbul.nom}_{url}'
+            crc=hashlib.sha1(str_hkey.encode()).hexdigest()
+            self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_Url VALUES("{crc}","{monbul.nom}","{url}",1);')
 
     ##
     # @brief Ecrit en BDD un binône CERTFR/CVE

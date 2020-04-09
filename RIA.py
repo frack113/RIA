@@ -144,7 +144,6 @@ def mon_script():
     # On sauvegarde le tout
     MaBdd.flush_tmp()
     MaBdd.flush_url()
-    MaBdd.save_db()
 
 #       Pour verifier la sortie sans avoir de mise a jour :)
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
