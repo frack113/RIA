@@ -28,6 +28,7 @@ from RIA_class import *
 from RIA_sql import *
 from RIA_mskb import *
 from RIA_wrapper import *
+from RIA_out import *
 
 ##
 #@brief Affiche simplement le credit
@@ -56,93 +57,6 @@ def credit():
     """
     print(mon_credit)
 
-##
-# @brief Une jolie sortie formater des info CERTFR
-# @param Nom le nom du bulletin
-# @param tab une liste
-def CERT_to_STR(Nom,tab):
-    allcve=MaBdd.get_all_cve_certfr(Nom)
-    if allcve:
-        tab.append("CVE"+" "*17+"|CVSS v3"+" "*38+"|Base V3|CVSS V2"+" "*28+"|Base V2| Pubication | Modification")
-        for mycve in allcve:
-            tab.append(f"{mycve.id:20}|{mycve.cvssV3:45}|{mycve.cvssV3base:^7}|{mycve.cvssV2:35}|{mycve.cvssV2base:^7}|{mycve.dateOrigine[:10]:^12}|{mycve.dateUpdate[:10]:^12}")
-        tab.append('')
-    cpe_max=MaBdd.get_max_lg_uri_cpe(Nom)
-    allcpe=MaBdd.get_all_cpe_certfr(Nom)
-    if allcpe:
-        tab.append("\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl" )
-        test=allcpe[0].cve+'_'+str(allcpe[0].conf)+' '+allcpe[0].vulnerable
-        for cpe in allcpe:
-            testlg=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
-            if test==testlg:
-                tab.append("\t"+" "*32+f"{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
-            else:
-                tab.append(f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
-                test=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
-    tab.append('')
-
-
-
-##
-# @brief Une jolie sortie formater des info Microsoft
-# @param Nom le nom du bulletin
-# @param tab une liste
-def MS_to_STR(Nom,tab):
-    allcve=Ksoft.get_info_certfr(Nom)
-    if allcve:
-        tab.append('Microsoft info')
-        tab.append("CVE"+" "*17+"|PRODUIT"+" "*53+"|KB"+" "*13+"|URL|Type")
-        for row in allcve:
-            tab.append(f"{row[0]:^20}|{row[1]:60}|{row[2]:^15}|{row[3]:^15}|{row[4]}")
-
-
-##
-# @brief Ecrit dans un fichier text les informations du bulletin
-# @param nom le nom du bulletin
-# @param annee repertoire de sortie
-def Write_CERTFR(nom,annee):
-    reponse=[]
-    cert=MaBdd.get_certfr(nom)
-    if not os.path.exists(f"txt/{annee}"):
-        os.mkdir(f"txt/{annee}")
-    file=open(f"txt/{annee}/{nom}.txt",'w',encoding='utf-8')
-    bultin_avi=cert.decode_file()
-    reponse.append(bultin_avi)
-    reponse.append('----------------------------------------')
-    reponse.append('----------- RIA By Frack113 ------------')
-    reponse.append('----------------------------------------')
-    CERT_to_STR(nom,reponse)
-    MS_to_STR(nom,reponse)
-    file.writelines('\n'.join(reponse))
-    file.close()
-
-##
-# @brief Ecrit un fichiers avec bulletins et URI23 pour une recherche
-# @param Nom dans les objets et non du fichier de sortie
-# @param uri chaine a chercher dans les uri23
-def URI_to_FILE(Nom,uri):
-    tab=[]
-    certs=MaBdd.get_orphan_by_obj(Nom)
-    if certs:
-        for cert in certs:
-            tab.append(cert[0]+' : '+cert[1])
-    tab.append('Les CVE')
-    allcpe=MaBdd.get_all_cpe_uri(uri)
-    cpe_max=50
-    if allcpe:
-        tab.append("\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl" )
-        test=allcpe[0].cve+'_'+str(allcpe[0].conf)+' '+allcpe[0].vulnerable
-        for cpe in allcpe:
-            testlg=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
-            if test==testlg:
-                tab.append("\t"+" "*32+f"{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
-            else:
-                tab.append(f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
-                test=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
-    file=file=open(f"mogs/{Nom}.txt",'w',encoding='utf-8')
-    file.writelines('\n'.join(tab))
-    file.close()
-
 
 ## Core du scripts
 # @brief le coeur du scripts
@@ -150,8 +64,13 @@ def URI_to_FILE(Nom,uri):
 def mon_script():
     global MaBdd
     global Ksoft
-    logging.basicConfig(filename='Update_certfr.log',level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    logging.info('Lancement du script')
+    logging.basicConfig(filename='Update_certfr.log',
+                        level=logging.INFO,
+                        format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.info('-------------------------------------')
+    logging.info('        Lancement du script')
+
     today=datetime.datetime.now().strftime("%Y%m%d")
 
     credit()
@@ -227,12 +146,13 @@ def mon_script():
     MaBdd.flush_url()
     MaBdd.save_db()
 
-
 #       Pour verifier la sortie sans avoir de mise a jour :)
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 ;")
 
-    print("Traite les mises a jour de bulletin")
+    print("Traite les sorties")
+    R_out=C_out(MaBdd,Ksoft)
+
     rows=MaBdd.get_all_new_certfr()
     logging.info("Get_all_new_certfr :"+str(len(rows)))
     pbar = tqdm(total=len(rows),ascii=True,desc="Bulletin")
@@ -240,26 +160,15 @@ def mon_script():
         pbar.update(1)
         logging.info(f'mise a jour de {bul[0]}')
         re_result=re.fullmatch('CERT(FR|A)\-(?P<an>\d+)\-AVI\-\d+',bul[0])
-        Write_CERTFR(bul[0],re_result.group('an'))
+        R_out.Write_CERTFR(bul[0],re_result.group('an'))
     pbar.close()
+
 
     rows = MaBdd.get_all_certfr_by_cve()
-    fiche=open("txt/CVE_CERTFR.txt",'w', encoding='utf-8')
-    pbar =  tqdm(total=len(rows),unit="bulletin",ascii=True,desc="CVE_CERTFR")
-    for bul in rows:
-        pbar.update(1)
-        fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
-    fiche.close()
-    pbar.close()
+    R_out.tab2_to_txt("txt/CVE_CERTFR.txt",rows)
 
     rows = MaBdd.get_all_orphan()
-    fiche=open("txt/Orphan.txt",'w', encoding='utf-8')
-    pbar =  tqdm(total=len(rows),unit="bulletin",ascii=True,desc="Orphan")
-    for bul in rows:
-        pbar.update(1)
-        fiche.writelines(f"{bul[0]:^10}:{bul[1]}\n")
-    fiche.close()
-    pbar.close()
+    R_out.tab2_to_txt("txt/Orphan.txt",rows)
 
 
     if os.path.exists('RIA_uri_manual.txt'):
@@ -271,8 +180,8 @@ def mon_script():
         for ligne in lignes:
             pbar.update(1)
             info=ligne.split(";")
-            URI_to_FILE(info[0],info[1])
-        fiche.close()
+            R_out.URI_to_FILE(info[0],info[1])
+        file.close()
         pbar.close()
 
     MaBdd.close_db()
