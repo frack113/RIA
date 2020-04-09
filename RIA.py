@@ -163,6 +163,8 @@ def mon_script():
         R_out.Write_CERTFR(bul[0],re_result.group('an'))
     pbar.close()
 
+    print("Le Json ...")
+    R_out.Export_certfr_json("new.json",'LIKE "%" AND New=1')
 
     rows = MaBdd.get_all_certfr_by_cve()
     R_out.tab2_to_txt("txt/CVE_CERTFR.txt",rows)

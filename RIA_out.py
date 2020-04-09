@@ -1,5 +1,7 @@
 from  RIA_class import *
 import os
+import json
+
 
 ##
 # @brief Gestion des sortie
@@ -22,7 +24,12 @@ class C_out:
     # @brief Une jolie sortie formater des info Microsoft
     # @param Nom le nom du bulletin
     # @param tab une liste
+    # @todo gerer la taille dynamique des collones
+    # @details Python help
     def MS_to_STR(self,Nom,tab):
+        """ ajoute a liste tab les informations Microsoft
+        Nom string non du bulletin
+        """
         allcve=self.Ksoft.get_info_certfr(Nom)
         if allcve:
             tab.append('Microsoft info')
@@ -34,7 +41,11 @@ class C_out:
     # @brief Une jolie sortie formater des info CERTFR
     # @param Nom le nom du bulletin
     # @param tab une liste
+    # @details Python help
     def CERT_to_STR(self,Nom,tab):
+        """ Ajoute a liste tab les informations CVE cpe
+        Nom string nom du Bulletin
+        """
         allcve=self.MaBdd.get_all_cve_certfr(Nom)
         if allcve:
             tab.append("CVE"+" "*17+"|CVSS v3"+" "*38+"|Base V3|CVSS V2"+" "*28+"|Base V2| Pubication | Modification")
@@ -60,7 +71,10 @@ class C_out:
     # @brief Ecrit dans un fichier text les informations du bulletin
     # @param nom le nom du bulletin
     # @param rep repertoire de sortie
+    # @details Python help
     def Write_CERTFR(self,nom,rep):
+        """Ecrit les information du bulletin 'nom' dans le repertoire txt/'rep'
+        """
         reponse=[]
         cert=self.MaBdd.get_certfr(nom)
         if not os.path.exists(f"txt/{rep}"):
@@ -80,7 +94,11 @@ class C_out:
     # @brief Ecrit un fichiers avec bulletins et URI23 pour une recherche
     # @param Nom dans les objets et non du fichier de sortie
     # @param uri chaine a chercher dans les uri23
+    # @details Python help
     def URI_to_FILE(self,Nom,uri):
+        """ Ecrit dans un fichier tous les bulletin avec 'Nom' dans l'objet
+        et tout les uri23 SQL LIKE %uri%
+        """
         tab=[]
         certs=self.MaBdd.get_orphan_by_obj(Nom)
         if certs:
@@ -102,22 +120,37 @@ class C_out:
         file=file=open(f"mogs/{Nom}.txt",'w',encoding='utf-8')
         file.writelines('\n'.join(tab))
         file.close()
-
+    ##
+    # @brief Ecrit un fichiers une liste 2 champs
+    # @param Nom_sortie nom du fichier
+    # @param tab la liste a ecrire
+    # @details Python help
     def tab2_to_txt(self,Nom_sortie,tab):
+        """ Ecrit un fichiers txt une liste 2 champs """
         fiche=open(Nom_sortie,'w', encoding='utf-8')
         for row in tab:
             fiche.writelines(f"{row[0]:^10}:{row[1]}\n")
         fiche.close()
 
-    def Export_certfr_json (Outname,sql):
+    ##
+    # @brief Export Json
+    # @param Outname nom du fichier
+    # @param sql la fin de la requete
+    # @details Python help
+    def Export_certfr_json (self,Outname,sql):
+        """Export en json tous les bulletin WHERE Non {sql} dans le fichier 'Outname'
+        en SQL:
+        Un bulletin sql= '="CERTFR-2020-AVI-001"'
+        les 2020    sql= 'LIKE "%2020%"'
+        """
         #print(f'SELECT Nom,Obj,Dateo,Datem FROM CERTFR WHERE Nom {sql};')
-        certs=MaBdd.get_sc(f'SELECT Nom,Obj,Dateo,Datem FROM CERTFR WHERE Nom {sql};')
+        certs=self.MaBdd.get_sc(f'SELECT Nom,Obj,Dateo,Datem FROM CERTFR WHERE Nom {sql};')
         l_cert=[{"Nom":row[0],"Obj":row[1],'Origine':row[2],'Modif':row[3]} for row in certs]
 
         l_full=[]
         for cert in l_cert:
             cve=[]
-            cves=MaBdd.get_sc(f"""SELECT DISTINCT
+            cves=self.MaBdd.get_sc(f"""SELECT DISTINCT
                                             cve_id,
                                             cve_cvss3,
                                             cve_cvss3base,
@@ -136,7 +169,7 @@ class C_out:
             cert['CVE']=cve
 
             cpe=[]
-            cpes=MaBdd.get_sc(f"""SELECT DISTINCT
+            cpes=self.MaBdd.get_sc(f"""SELECT DISTINCT
                                           cve_id,
                                           conf,
                                           ope,

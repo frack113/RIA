@@ -20,6 +20,7 @@ Test sous FEDORA 31 , Python 3.7.6
 - Wrapper site éditeur pour trouver les CVE
 - Ajout de l'aide des **Mogs** (ajout manuel)
 - mise a jour norme PEP 257 [3]
+- Sortie en Json
 
 ## Todo
 - nettoyer le code
