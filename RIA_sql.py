@@ -1,13 +1,16 @@
-from  RIA_class import *
-import sqlite3
-import copy
-import hashlib
-
 ## La gestion de la base de données
 # @file RIA_sql.py
 # @author Frack113
 # @date 01/04/2020
 # @brief Class pour les interactions avec la Bdd
+# @details Python help
+from  RIA_class import *
+import sqlite3
+import copy
+import hashlib
+
+##
+# @brief Manipulation de la BDD
 # @details Python help
 class C_sql:
     """ Class pour interragir avec la BDD en sqlite3
@@ -31,13 +34,63 @@ class C_sql:
           PRAGMA temp_store = '2';
           CREATE TABLE IF NOT EXISTS Info (Quoi TEXT UNIQUE,Date TEXT);
           CREATE TABLE IF NOT EXISTS CERTFR_Url (Hkey TEXT UNIQUE,Nom TEXT,Url TEXT,New INTEGER);
-          CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
-          CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,Nom text UNIQUE NOT NULL,Obj text,Dateo text,Datem text,New integer,file BLOB);
-          CREATE TABLE IF NOT EXISTS CERTFR_cve (Hkey TEXT UNIQUE,BULTIN text NOT NULL,cve_id text);
-          CREATE TABLE IF NOT EXISTS CVE (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTEGER);
-          CREATE TABLE IF NOT EXISTS CVE_tmp (Hkey TEXT UNIQUE,cve_id TEXT,cve_cvss3 TEXT,cve_cvss3base INTEGER,cve_cvss2 TEXT,cve_cvss2base INTEGER,cve_pdate TEXT,cve_ldate TEXT,new INTERGER);
-          CREATE TABLE IF NOT EXISTS CVE_cpe (Hkey TEXT UNIQUE,cve_id TEXT,conf INTERGER,ope TEXT,vuln TEXT,cpe TEXT,versionStartExcluding TEXT,versionStartIncluding,versionEndExcluding TEXT,versionEndIncluding TEXT,New INTEGER);
-          CREATE TABLE IF NOT EXISTS CVE_cpe_tmp (Hkey TEXT UNIQUE,cve_id TEXT,conf INTEGER,ope TEXT,vuln TEXT,cpe TEXT,versionStartExcluding TEXT,versionStartIncluding,versionEndExcluding TEXT,versionEndIncluding TEXT,New INTEGER);
+          CREATE TABLE IF NOT EXISTS CERTFR (Hkey TEXT UNIQUE,
+                                             Nom TEXT UNIQUE NOT NULL,
+                                             Obj TEXT,
+                                             Dateo TEXT,
+                                             Datem TEXT,
+                                             New integer,
+                                             file BLOB);
+          CREATE TABLE IF NOT EXISTS CERTFR_tmp (Hkey TEXT UNIQUE,
+                                                 Nom TEXT UNIQUE NOT NULL,
+                                                 Obj TEXT,
+                                                 Dateo TEXT,
+                                                 Datem TEXT,
+                                                 New integer,
+                                                 file BLOB);
+          CREATE TABLE IF NOT EXISTS CERTFR_cve (Hkey TEXT UNIQUE,
+                                                 BULTIN TEXT NOT NULL,
+                                                 cve_id TEXT);
+          CREATE TABLE IF NOT EXISTS CVE (Hkey TEXT UNIQUE,
+                                          cve_id TEXT,
+                                          cve_cvss3 TEXT,
+                                          cve_cvss3base INTEGER,
+                                          cve_cvss2 TEXT,
+                                          cve_cvss2base INTEGER,
+                                          cve_pdate TEXT,
+                                          cve_ldate TEXT,
+                                          new INTEGER);
+          CREATE TABLE IF NOT EXISTS CVE_tmp (Hkey TEXT UNIQUE,
+                                              cve_id TEXT,
+                                              cve_cvss3 TEXT,
+                                              cve_cvss3base INTEGER,
+                                              cve_cvss2 TEXT,
+                                              cve_cvss2base INTEGER,
+                                              cve_pdate TEXT,
+                                              cve_ldate TEXT,
+                                              new INTERGER);
+          CREATE TABLE IF NOT EXISTS CVE_cpe (Hkey TEXT UNIQUE,
+                                              cve_id TEXT,
+                                              conf INTERGER,
+                                              ope TEXT,
+                                              vuln TEXT,
+                                              cpe TEXT,
+                                              versionStartExcluding TEXT,
+                                              versionStartIncluding TEXT,
+                                              versionEndExcluding TEXT,
+                                              versionEndIncluding TEXT,
+                                              New INTEGER);
+          CREATE TABLE IF NOT EXISTS CVE_cpe_tmp (Hkey TEXT UNIQUE,
+                                                  cve_id TEXT,
+                                                  conf INTEGER,
+                                                  ope TEXT,
+                                                  vuln TEXT,
+                                                  cpe TEXT,
+                                                  versionStartExcluding TEXT,
+                                                  versionStartIncluding TEXT,
+                                                  versionEndExcluding TEXT,
+                                                  versionEndIncluding TEXT,
+                                                  New INTEGER);
         """)
 
     ##
@@ -122,7 +175,7 @@ class C_sql:
     # @return une liste
     # @details Python help
     def get_sc (self,script):
-        """ Execute le "script" SQL et renvoe une liste de tous les resultats
+        """ Execute le "script" SQL et renvoiee une liste de tous les résultatssultats
         """
         self.moncur.execute(script)
         return self.moncur.fetchall()
@@ -136,19 +189,20 @@ class C_sql:
         Ecrit les liens dans la table CERTFR_Url
         monbul est un C_certfr
         """
-        self.moncur.execute(f'''INSERT INTO CERTFR_tmp VALUES(
-            "{monbul.crc}",
-            "{monbul.nom}",
-            "{monbul.obj}",
-            "{monbul.dateOrigine}",
-            "{monbul.dateUpdate}",
-            {monbul.New},
-            "{monbul.file}"
-            );''')
+        self.moncur.execute(f'''INSERT INTO CERTFR_tmp VALUES("{monbul.crc}",
+                                                              "{monbul.nom}",
+                                                              "{monbul.obj}",
+                                                              "{monbul.dateOrigine}",
+                                                              "{monbul.dateUpdate}",
+                                                               {monbul.New},
+                                                              "{monbul.file}");''')
         for url in monbul.link:
             str_hkey=f'{monbul.nom}_{url}'
             crc=hashlib.sha1(str_hkey.encode()).hexdigest()
-            self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_Url VALUES("{crc}","{monbul.nom}","{url}",1);')
+            self.moncur.execute(f'''INSERT OR IGNORE INTO CERTFR_Url VALUES("{crc}",
+                                                                            "{monbul.nom}",
+                                                                            "{url}",
+                                                                             1);''')
 
     ##
     # @brief Ecrit en BDD un binône CERTFR/CVE
@@ -161,7 +215,9 @@ class C_sql:
         calcul la Hkey UNIQUE
         """
         Hkey=certfr+'_'+cve
-        self.moncur.execute(f'INSERT OR IGNORE INTO CERTFR_CVE VALUES("{Hkey}","{certfr}","{cve}");')
+        self.moncur.execute(f'''INSERT OR IGNORE INTO CERTFR_CVE VALUES("{Hkey}",
+                                                                        "{certfr}",
+                                                                        "{cve}");''')
 
     ##
     # @brief Ecrit en BDD un CVE
@@ -171,7 +227,15 @@ class C_sql:
         """Ecrit en BDD un CVE dans la table CVE_tmp
         moncve est un C_cve
         """
-        self.moncur.execute(f'INSERT INTO CVE_tmp VALUES("{moncve.crc}","{moncve.id}","{moncve.cvssV3}",{moncve.cvssV3base},"{moncve.cvssV2}",{moncve.cvssV2base},"{moncve.dateOrigine}","{moncve.dateUpdate}",{moncve.New});')
+        self.moncur.execute(f'''INSERT INTO CVE_tmp VALUES("{moncve.crc}",
+                                                           "{moncve.id}",
+                                                           "{moncve.cvssV3}",
+                                                            {moncve.cvssV3base},
+                                                           "{moncve.cvssV2}",
+                                                            {moncve.cvssV2base},
+                                                           "{moncve.dateOrigine}",
+                                                           "{moncve.dateUpdate}",
+                                                            {moncve.New});''')
 
     ##
     # @brief Ecrit en BDD un cpe
@@ -181,7 +245,17 @@ class C_sql:
         """ Ecrit en BDD un cpe dans la table CVE_cpe_tmp
         moncpe est un C_cpe
         """
-        self.moncur.execute(f'INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{moncpe.crc}","{moncpe.cve}",{moncpe.conf},"{moncpe.operateur}","{moncpe.vulnerable}","{moncpe.cpe23uri}","{moncpe.versionStartExcluding}","{moncpe.versionStartIncluding}","{moncpe.versionEndExcluding}","{moncpe.versionEndIncluding}",{moncpe.New});')
+        self.moncur.execute(f'''INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{moncpe.crc}",
+                                                                         "{moncpe.cve}",
+                                                                          {moncpe.conf},
+                                                                         "{moncpe.operateur}",
+                                                                         "{moncpe.vulnerable}",
+                                                                         "{moncpe.cpe23uri}",
+                                                                         "{moncpe.versionStartExcluding}",
+                                                                         "{moncpe.versionStartIncluding}",
+                                                                         "{moncpe.versionEndExcluding}",
+                                                                         "{moncpe.versionEndIncluding}",
+                                                                          {moncpe.New});''')
 
     ##
     # @brief Tranfert les table tmp vers les main
@@ -203,12 +277,12 @@ class C_sql:
           INSERT INTO CERTFR SELECT * FROM CERTFR_tmp;
           DELETE FROM CERTFR_tmp;
 
-          DELETE FROM CVE_tmp WHERE hkey in (SELECT DISTINCT Hkey FROM CVE);
+          DELETE FROM CVE_tmp WHERE hkey IN (SELECT DISTINCT Hkey FROM CVE);
           DELETE FROM CVE WHERE cve_id IN (SELECT cve_id FROM CVE_tmp);
           INSERT OR replace INTO CVE SELECT * from CVE_tmp;
           DELETE FROM CVE_tmp;
 
-          DELETE FROM CVE_cpe_tmp WHERE hkey in (SELECT DISTINCT Hkey FROM CVE_cpe);
+          DELETE FROM CVE_cpe_tmp WHERE hkey IN (SELECT DISTINCT Hkey FROM CVE_cpe);
           INSERT OR replace INTO CVE_cpe SELECT * from CVE_cpe_tmp;
           DELETE FROM CVE_cpe_tmp;
 
@@ -229,7 +303,7 @@ class C_sql:
         4 CVE vers CERTFR
         """
         self.moncur.executescript("""
-            UPDATE CERTFR_Url SET New=1 WHERE Url in (SELECT Url from URL_info WHERE New=1);
+            UPDATE CERTFR_Url SET New=1 WHERE Url IN (SELECT Url from URL_info WHERE New=1);
             UPDATE URL_info SET New=0;
 
             UPDATE CERTFR SET new=1 WHERE nom IN (SELECT DISTINCT Nom FROM CERTFR_URL WHERE New=1);
@@ -317,7 +391,7 @@ class C_sql:
         """Donne la taille max des uri23 pour un bulletin
         certfr est une string
         """
-        self.moncur.execute(f"SELECT max(length(cpe)) FROM CVE_cpe WHERE cve_id in (SELECT cve_id FROM CERTFR_cve WHERE BULTIN='{certfr}');")
+        self.moncur.execute(f"SELECT max(length(cpe)) FROM CVE_cpe WHERE cve_id IN (SELECT cve_id FROM CERTFR_cve WHERE BULTIN='{certfr}');")
         return self.moncur.fetchone()[0]
 
     ##
@@ -331,7 +405,7 @@ class C_sql:
         """
         all_cpe=[]
         moncpe=C_cpe()
-        self.moncur.execute(f"SELECT DISTINCT * FROM CVE_cpe WHERE cve_id in (SELECT cve_id FROM CERTFR_cve WHERE BULTIN='{certfr}') ORDER BY cve_id,conf ASC,vuln DESC;")
+        self.moncur.execute(f"SELECT DISTINCT * FROM CVE_cpe WHERE cve_id IN (SELECT cve_id FROM CERTFR_cve WHERE BULTIN='{certfr}') ORDER BY cve_id,conf ASC,vuln DESC;")
         rows=self.moncur.fetchall()
         if rows:
             for row in rows:

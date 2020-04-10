@@ -1,4 +1,4 @@
-## La gestion des wrapper Internet
+## La gestion des wrappers Internet
 # @file RIA_wrapper.py
 # @author Frack113
 # @date 08/04/2020
@@ -23,7 +23,7 @@ from RIA_sql import *
 # @brief Class Objet info Wrapper
 # @details Python help
 class C_wrapper_info:
-    """Objet pour manipuler les information sans passer par des listes
+    """Objet pour manipuler les informations sans passer par des listes
     """
 
     ##
@@ -63,22 +63,33 @@ class C_wrapper:
     # @details Python help
     def __init__ (self,MaBdd):
         """le constructor
-        MaBdd est un C_sql déjà ouvert
+        MaBdd est un objet C_sql déjà ouvert
         On ajoute les tables SQL spécifiques
-        Url est UNIQUE pour géré les conflits d'INSERT
+        info : Url est UNIQUE pour gérer les conflits d'INSERT
         """
         ##la Bdd via C_sql
         self.MaBdd=MaBdd
         self.MaBdd.write_sc("""
-          CREATE TABLE IF NOT EXISTS URL_info (Url TEXT UNIQUE,Fichier TEXT,rep TEXT,Taille INTEGER,Date TEXT,Regex TEXT,Surl TEXT,Module TEXT,New INTEGER);
-          CREATE TABLE IF NOT EXISTS URL_cve (Url TEXT UNIQUE,cve_id TEXT,Date TEXT,New INTEGER);
+          CREATE TABLE IF NOT EXISTS URL_info (Url TEXT UNIQUE,
+                                               Fichier TEXT,
+                                               rep TEXT,
+                                               Taille INTEGER,
+                                               Date TEXT,
+                                               Regex TEXT,
+                                               Surl TEXT,
+                                               Module TEXT,
+                                               New INTEGER);
+          CREATE TABLE IF NOT EXISTS URL_cve (Url TEXT UNIQUE,
+                                              cve_id TEXT,
+                                              Date TEXT,
+                                              New INTEGER);
         """)
 
     ##
     # @brief remet a 0 le champ New
     # @details Python help
     def Reset_New (self):
-        """Met a 0 le champ New en BDD
+        """Met a la valeur 0 le champ New en BDD
         """
         self.MaBdd.write_sc('UPDATE URL_info SET New=0;')
 
@@ -92,8 +103,8 @@ class C_wrapper:
     # @details Python help
     def Flush_cve (self):
         """Transfert de la table TMP vers la table normale
-        Selectionne tous les nom_bulletin et CVE où l'URL est commune aux deux tables
-        Ajoute ensuite ces informations dans la liste officiel via write_certfr_cve
+        Selectionne tous les nom de bulletin et CVE où l'URL est commune aux deux tables
+        Ajoute ensuite ces informations dans la liste officielle via write_certfr_cve
         """
         wrap_cve=self.MaBdd.get_sc('SELECT Nom,cve_id FROM CERTFR_Url JOIN URL_cve WHERE CERTFR_Url.Url=URL_cve.Url;')
         for w_cve in wrap_cve:
@@ -107,11 +118,10 @@ class C_wrapper:
         """Insert en BDD
         info est une liste [nom du bulletin,nom du CVE, date]
         """
-        self.MaBdd.write_sc(f'''INSERT OR REPLACE INTO URL_cve VALUES(
-         "{info[0]}",
-         "{info[1]}",
-         "{info[2]}",
-         1);''')
+        self.MaBdd.write_sc(f'''INSERT OR REPLACE INTO URL_cve VALUES("{info[0]}",
+                                                                      "{info[1]}",
+                                                                      "{info[2]}",
+                                                                       1);''')
 
     ##
     # @brief Sauvegarde en BDD un objet C_wrapper_info
@@ -141,7 +151,7 @@ class C_wrapper:
     # @return Une liste de C_wrapper_info
     # @details Python help
     def Read_wrapper_info (self,Champ,value,strict,New):
-        """Lit une liste de C_wrapper_info depuis la Bdd
+        """Lit une liste d'objet C_wrapper_info depuis la Bdd
         Strict(Boolean) permet de choisir entre une recherche '=' ou 'like'
         New(Boolean) permet de choisir que les New=1 ou pas
         """
@@ -225,10 +235,10 @@ class C_wrapper:
     # @details Python help
     def check_regex (self,info):
         """check_regex permet de parcourir une page unique avec des liens
-        info doit être un C_wrapper_info
+        info doit être un objet C_wrapper_info
             - Lit la page Url
-            - cherche chaque sous-page avec le Regex
-            - parse les sous-pages pour les CVE
+            - Cherche chaque sous-page avec le Regex
+            - Parse les sous-pages pour les CVE
         revoie True sinon False si erreur
         """
         if self.Url_is_updated (info):
@@ -278,8 +288,9 @@ class C_wrapper:
             return True
 
 #
-#                   Partie wrapper une fonction par editeur
+#                   Partie télécharchement de fichier "Download_"
 #
+
     ##
     # @brief Télécharge les Tar CERTFR si plus récent
     # @param EndDate l'année de fin int(YYYY)
@@ -323,6 +334,160 @@ class C_wrapper:
                 info.Url="https://nvd.nist.gov/feeds/json/cve/1.1/"+fichier
             self.Url_down_file(info)
         r_feed.close()
+
+#
+#                   Partie chargement de fichier "Load_"
+#
+
+    ##
+    # @brief extrait les info CVE d'un zip
+    # @param file le nom du fichier.zip
+    # @diafile RIA_load_zip_cve.dia
+    # @todo netoyer le code
+    # @details Python help
+    def Load_ZIP_cve (self,file):
+        """Extrait toutes les informations d'un zip CVE nist
+        file est avec son extension "nom_du_fichier.zip"
+        """
+        moncve=C_cve()
+        moncpe=C_cpe()
+        archive = zipfile.ZipFile(os.path.join("nvd/", file), 'r')
+        jsonfile = archive.open(archive.namelist()[0])
+        cve_dict = json.loads(jsonfile.read())
+        for cve in cve_dict['CVE_Items']:
+            moncve.reset()
+            moncve.id=cve['cve']['CVE_data_meta']['ID']
+            if 'baseMetricV3' in cve['impact']:
+                moncve.cvssV3=cve['impact']['baseMetricV3']['cvssV3']['vectorString']
+                moncve.cvssV3base=cve['impact']['baseMetricV3']['cvssV3']['baseScore']
+            if 'baseMetricV2' in cve['impact']:
+                moncve.cvssV2=cve['impact']['baseMetricV2']['cvssV2']['vectorString']
+                moncve.cvssV2base=cve['impact']['baseMetricV2']['cvssV2']['baseScore']
+            moncve.dateOrigine=cve['publishedDate']
+            moncve.dateUpdate=cve['lastModifiedDate']
+            moncve.set_crc()
+            moncve.New=1
+            self.MaBdd.write_cve_tmp(moncve)
+            cve_node=cve['configurations']['nodes']
+            if len(cve_node)>0:
+                conf=0
+                for cpelist in cve_node:
+                    conf+=1
+                    if len(cpelist)==2:
+                        opt,dict_cpe=cpelist
+                        if dict_cpe=='cpe_match':
+                            for cpe in cpelist[dict_cpe]:
+                                moncpe.reset()
+                                moncpe.cve=moncve.id
+                                moncpe.conf=conf
+                                moncpe.operateur=cpelist.get(opt)
+                                moncpe.vulnerable=cpe['vulnerable']
+                                moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
+                                if 'versionStartExcluding' in cpe:
+                                    moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
+                                if 'versionStartIncluding' in cpe:
+                                    moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
+                                if 'versionEndExcluding' in cpe:
+                                    moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
+                                if 'versionEndIncluding' in cpe:
+                                    moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
+                                moncpe.set_crc()
+                                moncpe.New=1
+                                self.MaBdd.write_cpe_tmp(moncpe)
+                        else:
+                            child_lst=cpelist[dict_cpe]
+                            for child in child_lst:
+                                for cpe in child['cpe_match']:
+                                    moncpe.reset()
+                                    moncpe.cve=moncve.id
+                                    moncpe.conf=conf
+                                    moncpe.operateur=cpelist.get(opt)
+                                    moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
+                                    moncpe.vulnerable=cpe['vulnerable']
+                                    if 'versionStartExcluding' in cpe:
+                                        moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
+                                    if 'versionStartIncluding' in cpe:
+                                        moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
+                                    if 'versionEndExcluding' in cpe:
+                                        moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
+                                    if 'versionEndIncluding' in cpe:
+                                        moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
+                                    moncpe.set_crc()
+                                    moncpe.New=1
+                                    self.MaBdd.write_cpe_tmp(moncpe)
+
+    ##
+    # @brief Recherche regex pour Load_TAR_certfr
+    # @param regex la regex
+    # @param obj la chaine a chercher
+    # @return la string ou ''
+    # @details Python help
+    def Search_re (self,regex,obj):
+        """cherche la regex avec un group "()" dans obj
+        revoie dans tous les cas un String
+        """
+        result=re.search(regex,obj)
+        if result:
+            return result.group(1)
+        else:
+            return ''
+
+    ##
+    # @brief extrait les info CERTFR d'un TAR
+    # @param file le nom du fichier.tar
+    # @diafile RIA_load_tar_certfr.dia
+    # @todo nettoyer le code
+    # @details Python help
+    def Load_TAR_certfr (self,file):
+        """Extrait toutes les informations d'un tar CERTFR
+        file est avec son extension "nom_du_fichier.tar"
+        """
+        monbul=C_certfr()
+        archive=tarfile.open(os.path.join("certfr/",file),'r')
+        for nom in archive.getnames():
+            if re.search('CERT(FR|A)\-\d+\-AVI\-\d+\.txt',nom):
+                monbul.reset()
+                bul_cve=[]
+                bultin_tar=archive.extractfile(nom).readlines()
+                bultin_list=[x.decode('utf-8') for x in bultin_tar]
+                bultin_avi=''.join(bultin_list)
+                addre='\n\nSecrétariat général de la défense et de la sécurité nationale – ANSSI – CERT-FR\n\n51, bd de La Tour-Maubourg\n75700 Paris 07 SP\n\nTél.:  +33 1 71 75 84 68\nFax:  +33 1 84 82 40 70\n\nWeb:  https://www.cert.ssi.gouv.fr\nMél:  cert-fr.cossi@ssi.gouv.fr\n'
+                bultin_avi=bultin_avi.replace(addre,'')
+                bultin_avi=re.sub('\\x0c','',bultin_avi)
+                bultin_avi=re.sub('\nPage \d+ / \d+\n','',bultin_avi)
+                monbul.link=re.findall(r'http[s]?://[^"\n]*',bultin_avi)
+                #http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0985  en http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2003-0985
+                bultin_avi=bultin_avi.replace('?name=CAN-','?name=CVE-')
+                monbul.file=re.sub('\n\n','\n',bultin_avi)
+
+                #le nom du bulletin
+                monbul.nom=self.Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)
+                #l'objet   du bulletin
+                monbul.obj=self.Search_re('Objet\:\ (.*)',monbul.file)
+                #date de creation
+                datetmp=self.Search_re('Date de la première version\n*(\d{1,2} \w* \d{4})',monbul.file)
+                if len(datetmp)>1:
+                    monbul.dateOrigine=datetmp
+                else:
+                    monbul.dateOrigine=self.Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
+                #date de modif
+                monbul.dateUpdate=self.Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)
+                #les CVE
+                regex=re.findall('http://cve\.mitre\.org/cgi\-bin/cvename\.cgi\?name\=(CVE\-\d{4}\-\d+)',monbul.file)
+                if regex:
+                    bul_cve=regex
+                if len(bul_cve)>0:
+                    for nom_cve in bul_cve:
+                        self.MaBdd.write_certfr_cve(monbul.nom,nom_cve)
+                monbul.set_crc()
+                monbul.file=monbul.encode_file()
+                monbul.New=1
+                self.MaBdd.write_certfr_tmp(monbul)
+
+#
+#                   Partie wrapper une fonction par éditeur "Check_"
+#
+
 
     ##
     # @brief Verifie les release de la page about.gitlab.com
@@ -489,148 +654,3 @@ class C_wrapper:
             self.Check_Redhat()
             self.MaBdd.set_Info_date("Redhat",date)
 
-
-    ##
-    # @brief extrait les info CVE d'un zip
-    # @param file le nom du fichier.zip
-    # @diafile RIA_load_zip_cve.dia
-    # @todo netoyer le code
-    # @details Python help
-    def Load_ZIP_cve (self,file):
-        """Extrait toutes les informations d'un zip CVE nist
-        file est avec son extension "nom_du_fichier.zip"
-        """
-        moncve=C_cve()
-        moncpe=C_cpe()
-        archive = zipfile.ZipFile(os.path.join("nvd/", file), 'r')
-        jsonfile = archive.open(archive.namelist()[0])
-        cve_dict = json.loads(jsonfile.read())
-        for cve in cve_dict['CVE_Items']:
-            moncve.reset()
-            moncve.id=cve['cve']['CVE_data_meta']['ID']
-            if 'baseMetricV3' in cve['impact']:
-                moncve.cvssV3=cve['impact']['baseMetricV3']['cvssV3']['vectorString']
-                moncve.cvssV3base=cve['impact']['baseMetricV3']['cvssV3']['baseScore']
-            if 'baseMetricV2' in cve['impact']:
-                moncve.cvssV2=cve['impact']['baseMetricV2']['cvssV2']['vectorString']
-                moncve.cvssV2base=cve['impact']['baseMetricV2']['cvssV2']['baseScore']
-            moncve.dateOrigine=cve['publishedDate']
-            moncve.dateUpdate=cve['lastModifiedDate']
-            moncve.set_crc()
-            moncve.New=1
-            self.MaBdd.write_cve_tmp(moncve)
-            cve_node=cve['configurations']['nodes']
-            if len(cve_node)>0:
-                conf=0
-                for cpelist in cve_node:
-                    conf+=1
-                    if len(cpelist)==2:
-                        opt,dict_cpe=cpelist
-                        if dict_cpe=='cpe_match':
-                            for cpe in cpelist[dict_cpe]:
-                                moncpe.reset()
-                                moncpe.cve=moncve.id
-                                moncpe.conf=conf
-                                moncpe.operateur=cpelist.get(opt)
-                                moncpe.vulnerable=cpe['vulnerable']
-                                moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
-                                if 'versionStartExcluding' in cpe:
-                                    moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
-                                if 'versionStartIncluding' in cpe:
-                                    moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
-                                if 'versionEndExcluding' in cpe:
-                                    moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
-                                if 'versionEndIncluding' in cpe:
-                                    moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
-                                moncpe.set_crc()
-                                moncpe.New=1
-                                self.MaBdd.write_cpe_tmp(moncpe)
-                        else:
-                            child_lst=cpelist[dict_cpe]
-                            for child in child_lst:
-                                for cpe in child['cpe_match']:
-                                    moncpe.reset()
-                                    moncpe.cve=moncve.id
-                                    moncpe.conf=conf
-                                    moncpe.operateur=cpelist.get(opt)
-                                    moncpe.cpe23uri=cpe['cpe23Uri'].replace('"',"'")
-                                    moncpe.vulnerable=cpe['vulnerable']
-                                    if 'versionStartExcluding' in cpe:
-                                        moncpe.versionStartExcluding=cpe['versionStartExcluding'].replace('"',"'")
-                                    if 'versionStartIncluding' in cpe:
-                                        moncpe.versionStartIncluding=cpe['versionStartIncluding'].replace('"',"'")
-                                    if 'versionEndExcluding' in cpe:
-                                        moncpe.versionEndExcluding=cpe['versionEndExcluding'].replace('"',"'")
-                                    if 'versionEndIncluding' in cpe:
-                                        moncpe.versionEndIncluding=cpe['versionEndIncluding'].replace('"',"'")
-                                    moncpe.set_crc()
-                                    moncpe.New=1
-                                    self.MaBdd.write_cpe_tmp(moncpe)
-
-    ##
-    # @brief Recherche regex pour Load_TAR_certfr
-    # @param regex la regex
-    # @param obj la chaine a chercher
-    # @return la string ou ''
-    # @details Python help
-    def Search_re (self,regex,obj):
-        """cherche la regex avec un group "()" dans obj
-        revoie dans tous les cas un String
-        """
-        result=re.search(regex,obj)
-        if result:
-            return result.group(1)
-        else:
-            return ''
-
-    ##
-    # @brief extrait les info CERTFR d'un TAR
-    # @param file le nom du fichier.tar
-    # @diafile RIA_load_tar_certfr.dia
-    # @todo nettoyer le code
-    # @details Python help
-    def Load_TAR_certfr (self,file):
-        """Extrait toutes les informations d'un tar CERTFR
-        file est avec son extension "nom_du_fichier.tar"
-        """
-        monbul=C_certfr()
-        archive=tarfile.open(os.path.join("certfr/",file),'r')
-        for nom in archive.getnames():
-            if re.search('CERT(FR|A)\-\d+\-AVI\-\d+\.txt',nom):
-                monbul.reset()
-                bul_cve=[]
-                bultin_tar=archive.extractfile(nom).readlines()
-                bultin_list=[x.decode('utf-8') for x in bultin_tar]
-                bultin_avi=''.join(bultin_list)
-                addre='\n\nSecrétariat général de la défense et de la sécurité nationale – ANSSI – CERT-FR\n\n51, bd de La Tour-Maubourg\n75700 Paris 07 SP\n\nTél.:  +33 1 71 75 84 68\nFax:  +33 1 84 82 40 70\n\nWeb:  https://www.cert.ssi.gouv.fr\nMél:  cert-fr.cossi@ssi.gouv.fr\n'
-                bultin_avi=bultin_avi.replace(addre,'')
-                bultin_avi=re.sub('\\x0c','',bultin_avi)
-                bultin_avi=re.sub('\nPage \d+ / \d+\n','',bultin_avi)
-                monbul.link=re.findall(r'http[s]?://[^"\n]*',bultin_avi)
-                #http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0985  en http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2003-0985
-                bultin_avi=bultin_avi.replace('?name=CAN-','?name=CVE-')
-                monbul.file=re.sub('\n\n','\n',bultin_avi)
-
-                #le nom du bulletin
-                monbul.nom=self.Search_re('N° (CERT(FR|A)-\d{4}-AVI-\d+)',monbul.file)
-                #l'objet   du bulletin
-                monbul.obj=self.Search_re('Objet\:\ (.*)',monbul.file)
-                #date de creation
-                datetmp=self.Search_re('Date de la première version\n*(\d{1,2} \w* \d{4})',monbul.file)
-                if len(datetmp)>1:
-                    monbul.dateOrigine=datetmp
-                else:
-                    monbul.dateOrigine=self.Search_re('Paris, le (\d{1,2} \w* \d{4})',monbul.file)
-                    #date de modif
-                    monbul.dateUpdate=self.Search_re('Date de la dernière version\n*(\d{1,2} \w* \d{4})',monbul.file)
-                    #les CVE
-                regex=re.findall('http://cve\.mitre\.org/cgi\-bin/cvename\.cgi\?name\=(CVE\-\d{4}\-\d+)',monbul.file)
-                if regex:
-                    bul_cve=regex
-                if len(bul_cve)>0:
-                    for nom_cve in bul_cve:
-                        self.MaBdd.write_certfr_cve(monbul.nom,nom_cve)
-                monbul.set_crc()
-                monbul.file=monbul.encode_file()
-                monbul.New=1
-                self.MaBdd.write_certfr_tmp(monbul)

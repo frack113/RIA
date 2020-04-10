@@ -1,3 +1,10 @@
+## Gestion des sorties
+# @file RIA_out.py
+# @author Frack113
+# @date 09/04/2020
+# @brief Class pour les sortie fichier
+#
+
 from  RIA_class import *
 import os
 import json
@@ -10,11 +17,12 @@ class C_out:
 
     ## constructors
     # @param MaBdd C_sql
+    # @param Ksoft C_mskb
     # @details Python help
     def __init__ (self,MaBdd,Ksoft):
         """le constructor
-        MaBdd est un C_sql déjà ouvert
-        Ksoft est un C_mskb déjà ouvert
+        MaBdd est un objet C_sql déjà existant
+        Ksoft est un objet C_mskb déjà existant
         """
         ##la Bdd via C_sql
         self.MaBdd=MaBdd
@@ -48,19 +56,19 @@ class C_out:
         """
         allcve=self.MaBdd.get_all_cve_certfr(Nom)
         if allcve:
-            tab.append("CVE"+" "*17+"|CVSS v3"+" "*38+"|Base V3|CVSS V2"+" "*28+"|Base V2| Pubication | Modification")
+            tab.append(f"{'CVE':^20}|{'CVSS v3':^45}|Base V3|{'CVSS V2':^35}+|Base V2| Pubication | Modification")
             for mycve in allcve:
                 tab.append(f"{mycve.id:20}|{mycve.cvssV3:45}|{mycve.cvssV3base:^7}|{mycve.cvssV2:35}|{mycve.cvssV2base:^7}|{mycve.dateOrigine[:10]:^12}|{mycve.dateUpdate[:10]:^12}")
             tab.append('')
         cpe_max=self.MaBdd.get_max_lg_uri_cpe(Nom)
         allcpe=self.MaBdd.get_all_cpe_certfr(Nom)
         if allcpe:
-            tab.append("\tCVE"+" "*17+"|Conf| OPE |  Vuln | CPE"+" "*(cpe_max-4)+"| Start_incl | Start_excl |  End_incl  |  End_excl" )
+            tab.append(f"\t{'CVE':^20}|Conf| OPE |  Vuln |{'CPE':^{cpe_max}}| Start_incl | Start_excl |  End_incl  |  End_excl")
             test=allcpe[0].cve+'_'+str(allcpe[0].conf)+' '+allcpe[0].vulnerable
             for cpe in allcpe:
                 testlg=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable
                 if test==testlg:
-                    tab.append("\t"+" "*32+f"{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
+                    tab.append(f"\t{' ':32}{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
                 else:
                     tab.append(f"\t{cpe.cve:^20}|{cpe.conf:^4}|{cpe.operateur:^5}|{cpe.vulnerable:^7}|{cpe.cpe23uri:{cpe_max}}|{cpe.versionStartExcluding:12}|{cpe.versionStartIncluding:12}|{cpe.versionEndExcluding:12}|{cpe.versionEndIncluding:12}")
                     test=cpe.cve+' '+str(cpe.conf)+' '+cpe.vulnerable

@@ -1,9 +1,10 @@
-##
+##Le coeur
 # @file RIA.py
 # @author Frack113
 # @date 07/04/2020
 # @brief Recherche d'Information Automatisée
 # @todo utiliser les best practice Python
+# @todo ajouter des options en cmd --forceupdate --help ...
 #
 # @mainpage
 # @section Description
@@ -48,7 +49,7 @@ def credit():
 /\\     |_|     /\\
 | \\___/' `\\___/ |
  \_/  \\___/  \\_/
-  |\\__/   \\__/|               Version 0
+  |\\__/   \\__/|               Version 1
   |/  \\___/  \\|              Slow is best
  ./\\__/   \\__/\\,
  | /  \\___/  \\ |
@@ -79,18 +80,18 @@ def mon_script():
         pass
     else:
         os.mkdir("txt")
-        logging.warning('manque le repertoire de sortie txt')
+        logging.warning('Manque le repertoire de sortie txt')
 
     if os.path.exists("mogs"):
         pass
     else:
         os.mkdir("mogs")
-        logging.warning('manque le repertoire de sortie mogs')
+        logging.warning('Manque le repertoire de sortie mogs')
 
     if os.path.exists('RIA.db'):
         logging.info('RIA.db ok')
     else:
-        logging.warning('manque le fihier de bdd initial')
+        logging.warning('Manque le fihier de bdd initial')
         dest = shutil.copyfile('RIA_init.db','RIA.db')
 
     MaBdd=C_sql()
@@ -133,7 +134,7 @@ def mon_script():
 
     cves=MaBdd.get_all_cve_orphan()
     if cves:
-        logging.info(str(len(cves))+" CVE non present sur le NIST cré(s)")
+        logging.info(str(len(cves))+" CVE non présent sur le NIST")
         moncve=C_cve()
         moncve.New=1
         for strcve in cves:
@@ -145,7 +146,7 @@ def mon_script():
     MaBdd.flush_tmp()
     MaBdd.flush_url()
 
-#       Pour verifier la sortie sans avoir de mise a jour :)
+#       Pour vérifier la sortie sans avoir de mise a jour :)
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 ;")
 
