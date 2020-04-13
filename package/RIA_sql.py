@@ -13,7 +13,7 @@ import hashlib
 # @brief Manipulation de la BDD
 # @details Python help
 class C_sql:
-    """ Class pour interragir avec la BDD en sqlite3
+    """ Class pour interagir avec la BDD en sqlite3
     """
     ##
     # @brief constructors
@@ -21,7 +21,7 @@ class C_sql:
     def __init__ (self):
         """ le constructor
         on utilise PRAGMA pour optimiser les écritures
-        ouvre le ficier RIA.db
+        ouvre le fichier RIA.db
         Crée les tables de travail
         """
         ## le fichier MaBdd
@@ -115,10 +115,10 @@ class C_sql:
     ##
     # @brief cherche une date dans la table information
     # @param quoi ce que l'on recherche
-    # @todo changer le nom des champs plus clair
+    # @todo changer le nom des champs en plus explicite
     # @details Python help
     def get_Info_date(self,quoi):
-        """ Revoie la date ou "" pour quoi dans la table Info
+        """ Renvoie la date ou '' pour la recherche 'quoi' dans la table Info
         """
         self.moncur.execute(f'SELECT Date FROM Info WHERE Quoi="{quoi}";')
         row=self.moncur.fetchone()
@@ -128,12 +128,12 @@ class C_sql:
             return ""
 
     ##
-    # @brief ecrit dans la table information
+    # @brief écrit dans la table information
     # @param quoi  le champ
     # @param date  la date
     # @details Python help
     def set_Info_date (self,quoi,date):
-        """ Sauvegarde la date pour quoi dans la table Info
+        """ Sauvegarde la date pour la recherche 'quoi' dans la table Info
         """
         self.moncur.execute(f'INSERT OR REPLACE INTO Info VALUES("{quoi}","{date}");')
 
@@ -150,7 +150,7 @@ class C_sql:
         """)
 
     ##
-    # @brief Mets New à "0"
+    # @brief Met New à "0"
     # @details Python help
     def clean_new (self):
         """ Met à 0 le champ New pour CERTFR,CVE et CVE_cpe
@@ -161,21 +161,21 @@ class C_sql:
          UPDATE CVE_cpe SET New=0;
         """)
     ##
-    # @brief Execute un script sqlite sans retour
+    # @brief Exécute un script sqlite sans retour
     # @param script le sql
     # @details Python help
     def write_sc (self,script):
-        """Execute le "script" SQL sans retour
+        """Exécute le "script" SQL sans retour
         """
         self.moncur.executescript(script)
 
     ##
-    # @brief Execute un script sqlite
+    # @brief Exécute un script sqlite
     # @param script le sql
     # @return une liste
     # @details Python help
     def get_sc (self,script):
-        """ Execute le "script" SQL et renvoiee une liste de tous les résultatssultats
+        """ Exécute le "script" SQL et renvoie une liste de tous les résultats
         """
         self.moncur.execute(script)
         return self.moncur.fetchall()
@@ -206,13 +206,13 @@ class C_sql:
 
     ##
     # @brief Ecrit en BDD un binône CERTFR/CVE
-    # calcul le CRC automaiquement
+    # calcul le CRC automatiquement
     # @param certfr nom du bulletin
-    # @param cve non du cve
+    # @param cve nom du cve
     # @details Python help
     def write_certfr_cve (self,certfr,cve):
-        """ Ecrit en BDD un CVE dans la table CERTFR_tmp
-        calcul la Hkey UNIQUE
+        """ Ecrit en BDD une CVE dans la table CERTFR_tmp
+        Et calcule la Hkey UNIQUE
         """
         Hkey=certfr+'_'+cve
         self.moncur.execute(f'''INSERT OR IGNORE INTO CERTFR_CVE VALUES("{Hkey}",
@@ -258,16 +258,16 @@ class C_sql:
                                                                           {moncpe.New});''')
 
     ##
-    # @brief Tranfert les table tmp vers les main
+    # @brief Tranfère les tables tmp vers les mains
     # @details Python help
     def flush_tmp (self):
-        """ Transfert les données de
+        """ Transfère les données de
             CERTFR_tmp vers CERTFR
             CVE_tmp vers CVE
             CVE_cpe_tmp vers CVE_cpe
         gestion des doublons :
          1 Hkey déjà présente
-         2 suppresion des ancients enregistrements table officielle
+         2 suppression des ancients enregistrements table officielle
          3 copie des données restantes
          4 efface les tables temporaires
         """
@@ -293,10 +293,10 @@ class C_sql:
         """)
 
     ##
-    # @brief Cherche toutes CERTFR mis a jour par les URL
+    # @brief Cherche tous les CERTFR mis à jour par les URL
     # @details Python help
     def flush_url (self):
-        """ Mise a jour du champ New des CERTFR par rapport au wrapper URL
+        """ Mise à jour du champ New des CERTFR par rapport au wrapper URL
         1 URL_info(wrapper URL) vers CERTFR_Url (wrapper CERTFR)
         2 CERTFR_Url vers CERTFR
         3 URL_cve (wrapper URL) vers CVE (wrapper NIST CVE)
@@ -319,11 +319,11 @@ class C_sql:
 
 
     ##
-    # @brief Revoie tous les bulletins mis a jour
+    # @brief Renvoie tous les bulletins mis à jour
     # @return liste
     # @details Python help
     def get_all_new_certfr (self):
-        """ renvoie tous un liste de tous les nom de bulletin avec New=1
+        """ renvoie une liste de tous les noms de bulletins avec New=1
         """
         self.moncur.execute("SELECT Nom FROM CERTFR WHERE New=1;")
         return self.moncur.fetchall()
@@ -354,8 +354,8 @@ class C_sql:
         return monbul
 
     ##
-    # @brief revoie tous les CVE d'un bulletin
-    # @param certfr nom du bulletins
+    # @brief renvoie tous les CVE d'un bulletin
+    # @param certfr nom du bulletin
     # @return liste de C_cve ou une liste vide
     # @details Python help
     def get_all_cve_certfr (self,certfr):
@@ -384,7 +384,7 @@ class C_sql:
     ##
     # @brief Taille max des uri23 d'un bulletin
     # @param certfr nom du bulletin
-    # @return la taille (nb de carractére)
+    # @return la taille (nb de caractères)
     # @todo gérer les erreurs
     # @details Python help
     def get_max_lg_uri_cpe (self,certfr):
@@ -395,8 +395,8 @@ class C_sql:
         return self.moncur.fetchone()[0]
 
     ##
-    # @brief revoie tous les CPE d'un bulletin
-    # @param certfr nom du bulletins
+    # @brief renvoie tous les CPE d'un bulletin
+    # @param certfr nom du bulletin
     # @return liste de C_cpe ou None
     # @details Python help
     def get_all_cpe_certfr (self,certfr):
@@ -425,8 +425,8 @@ class C_sql:
         return all_cpe
 
     ##
-    # @brief revoie to les cpe pour un uri23
-    # @param uri une partie d'uri a chercher
+    # @brief renvoie tous les cpe pour un uri23
+    # @param uri une partie d'uri à chercher
     # @return liste de C_cpe ou None
     # @details Python help
     def get_all_cpe_uri (self,uri):
@@ -456,20 +456,20 @@ class C_sql:
         return all_cpe
 
     ##
-    # @brief Les bulletin par obj sans CVE
-    # @param obj chaine a chercher
+    # @brief Les bulletins par obj sans CVE
+    # @param obj chaîne à chercher
     # @return liste ou []
     # @details Python help
     def get_orphan_by_obj (self,obj):
-        """Renvoie un liste des nom de bulletin et objet sans CVE
-         obj chaine a chercher dans les objet des bulletins
+        """Renvoie une liste des noms de bulletins et objets sans CVE
+         obj chaîne à chercher dans les objets des bulletins
          utilise la fonction SQL LIKE
         """
         self.moncur.execute(f'SELECT Nom,Obj FROM CERTFR WHERE Nom NOT IN (SELECT DISTINCT BULTIN FROM CERTFR_cve) AND Obj LIKE "%{obj}%";')
         return self.moncur.fetchall()
 
     ##
-    # @brief Les bulletin par CVE
+    # @brief Les bulletins par CVE
     # @return liste ou []
     # @details Python help
     def get_all_certfr_by_cve (self):
@@ -488,18 +488,18 @@ class C_sql:
     # @return liste ou []
     # @details Python help
     def get_all_orphan (self):
-        """ Renvoie une liste de tous les bulletin et Objet sans CVE
+        """ Renvoie une liste de tous les bulletins et Objets sans CVE
         """
         self.moncur.execute("SELECT Nom,Obj FROM CERTFR WHERE Nom NOT IN (SELECT DISTINCT BULTIN FROM CERTFR_cve);")
         return self.moncur.fetchall()
 
     ##
-    # @brief Les CVE non present sur le NIST
+    # @brief Les CVE non présentes sur le NIST
     # @return liste ou []
     # @details Python help
     def get_all_cve_orphan (self):
-        """ Renvoie une liste de tous les CVE des bulletins non present sur le nist
-        Soit ils sont pas encore valide soit le CERTFR a mal formater son bulletin
+        """ Renvoie une liste de toutes les CVE des bulletins non présentes sur le nist
+        Soit elles ne sont pas encore valides soit le CERTFR a mal formaté son bulletin
         """
         self.moncur.execute("SELECT DISTINCT cve_id FROM CERTFR_cve WHERE cve_id NOT IN (SELECT DISTINCT cve_id from CVE);")
         return self.moncur.fetchall()

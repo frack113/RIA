@@ -15,6 +15,7 @@ import shutil
 import zipfile
 import tarfile
 import time
+import logging
 
 
 from RIA_sql import *
@@ -84,6 +85,11 @@ class C_wrapper:
                                               Date TEXT,
                                               New INTEGER);
         """)
+        myconf=logging.basicConfig(filename='Wrapper.log',
+                        level=logging.INFO,
+                        format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
+        self.mylog = logging.getLogger(myconf)
 
     ##
     # @brief remet a 0 le champ New
@@ -217,6 +223,7 @@ class C_wrapper:
         Si l'URL n'est pas en BDD revoie True
         """
         h_web=requests.head(info.Url)
+        self.mylog.info("header "+info.Url)
         date=h_web.headers['Last-Modified']
         h_web.close()
         reponse=self.Read_wrapper_info("Url",info.Url,True,False)
@@ -244,7 +251,9 @@ class C_wrapper:
         if self.Url_is_updated (info):
             #modu=bdd.get_sc(f"select Url from URL_info  where module='{info.module}';")
             #all_url=[url[0] for url in modu]
-            r_web= requests.get(info.Url)
+            self.mylog.info("regex get" +info.Url)
+            r_web= requests.get(info.Url,timeout=2)
+            self.mylog.info(info.Url)
             if r_web.ok:
                 info.Date=r_web.headers['Last-Modified']
                 info.New=1
@@ -258,6 +267,7 @@ class C_wrapper:
                     else:
                         full_url=full_url+'/'
                     l_info.Url=full_url
+                    self.mylog.info(full_url)
                     c_info=self.Read_wrapper_info("Url",full_url,True,False)
                     if c_info:
                         pass #sous page deja traitée
@@ -285,6 +295,8 @@ class C_wrapper:
                                 self.write_url_cve(c_info)
                         feed_web.close()
             r_web.close()
+            return True
+        else:
             return True
 
 #
@@ -531,6 +543,7 @@ class C_wrapper:
         inf.Module='Kaspersky'
         inf.New=1
         r_web=requests.get(inf.Url)
+        self.mylog.info(inf.Url)
         inf.Date=r_web.headers['Date']
         self.Write_wrapper_info(inf)
         soup=BeautifulSoup(r_web.text,'html.parser')
@@ -559,6 +572,7 @@ class C_wrapper:
         inf.Module='Xen'
         inf.New=1
         r_web=requests.get(inf.Url)
+        self.mylog.info(inf.Url)
         inf.Date=r_web.headers['Last-Modified']
         self.Write_wrapper_info(inf)
         r_json=json.loads(r_web.text)
@@ -596,6 +610,7 @@ class C_wrapper:
             param='page='+str(page)
             url=api_url+endpoint+"?"+param
             rha=requests.get(url)
+            self.mylog.info(url)
             if rha.status_code==200:
                 if rha.json():
                     inf.Date=rha.headers['Date']
@@ -624,30 +639,31 @@ class C_wrapper:
         """lance tous les wrapper en une seule fonction
         cela evite de devoir modifier RIA.py si l'on rajoute un nouveau.
         """
+        self.mylog.info("Gitlab")
         if self.MaBdd.get_Info_date("Gitlab")== date:
             pass
         else:
             self.Check_Gitlab()
             self.MaBdd.set_Info_date("Gitlab",date)
-
+        self.mylog.info("Ubuntu")
         if self.MaBdd.get_Info_date("Ubuntu")== date:
             pass
         else:
             self.Check_Ubuntu()
             self.MaBdd.set_Info_date("Ubuntu",date)
-
+        self.mylog.info("Kaspersky")
         if self.MaBdd.get_Info_date("Kaspersky")== date:
             pass
         else:
             self.Check_Kaspersky()
             self.MaBdd.set_Info_date("Kaspersky",date)
-
+        self.mylog.info("Xen")
         if self.MaBdd.get_Info_date("Xen")== date:
             pass
         else:
             self.Check_Xen()
             self.MaBdd.set_Info_date("Xen",date)
-
+        self.mylog.info("Redhat")
         if self.MaBdd.get_Info_date("Redhat")== date:
             pass
         else:

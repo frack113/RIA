@@ -2,7 +2,7 @@
 # @file RIA.py
 # @author Frack113
 # @date 07/04/2020
-# @brief Recherche d'Information Automatisée
+# @brief Recherche d'Informations Automatisées
 # @todo utiliser les best practice Python
 # @todo ajouter des options en cmd --forceupdate --help ...
 #
@@ -19,12 +19,14 @@
 
 import re
 import os
+import sys
 import datetime
 import requests
 import shutil
 from tqdm import tqdm
 import logging
 
+sys.path.append ('./package')
 from RIA_class import *
 from RIA_sql import *
 from RIA_mskb import *
@@ -32,7 +34,7 @@ from RIA_wrapper import *
 from RIA_out import *
 
 ##
-#@brief Affiche simplement le credit
+#@brief Affiche simplement le crédit
 def credit():
     mon_credit="""
                              ____ ____ ____
@@ -41,8 +43,8 @@ def credit():
                             |/__\|/__\|/__\|
 
                               Recherche
-                                 d'Information
-                                       Automatisée
+                                 d'Informations
+                                       Automatisées
 
        /^\\
       | " |
@@ -59,9 +61,9 @@ def credit():
     print(mon_credit)
 
 
-## Core du scripts
-# @brief le coeur du scripts
-# @todo simplifier les repetitions
+## Core du script
+# @brief le coeur du script
+# @todo simplifier les répétitions
 def mon_script():
     global MaBdd
     global Ksoft
@@ -80,18 +82,18 @@ def mon_script():
         pass
     else:
         os.mkdir("txt")
-        logging.warning('Manque le repertoire de sortie txt')
+        logging.warning('Manque le répertoire de sortie txt')
 
     if os.path.exists("mogs"):
         pass
     else:
         os.mkdir("mogs")
-        logging.warning('Manque le repertoire de sortie mogs')
+        logging.warning('Manque le répertoire de sortie mogs')
 
     if os.path.exists('RIA.db'):
         logging.info('RIA.db ok')
     else:
-        logging.warning('Manque le fihier de bdd initial')
+        logging.warning('Manque le fichier de bdd initial')
         dest = shutil.copyfile('RIA_init.db','RIA.db')
 
     MaBdd=C_sql()
@@ -118,20 +120,26 @@ def mon_script():
     Wrapper.Download_Certfr(int(today[:4]))
     Wrapper.Download_CVE()
 
-    print ("Chargement des mise à jour CERTFR")
+    print ("Chargement des mises à jour CERTFR")
     updates=Wrapper.Read_wrapper_info("Module","CERTFR",True,True)
     logging.info("Update CERTFR : "+str(len(updates)))
     for update in updates:
         Wrapper.Load_TAR_certfr(update.Fichier)
-        logging.warning(update.Fichier+ " mis a jour")
+        logging.warning(update.Fichier+ " mis à jour")
 
-    print ("Chargement des mise à jour CVE")
+    print ("Chargement des mises à jour CVE")
     updates=Wrapper.Read_wrapper_info("Module","CVE",True,True)
     logging.info("Update CVE : "+str(len(updates)))
     for update in updates:
         Wrapper.Load_ZIP_cve(update.Fichier)
-        logging.warning(update.Fichier+ " mis a jour")
+        logging.warning(update.Fichier+ " mis à jour")
 
+    
+    # On mets à jour les informations trouvées
+    MaBdd.flush_tmp()
+    MaBdd.flush_url()
+    
+    #Il y a des CVE manquantes ?
     cves=MaBdd.get_all_cve_orphan()
     if cves:
         logging.info(str(len(cves))+" CVE non présent sur le NIST")
@@ -142,11 +150,9 @@ def mon_script():
             moncve.set_crc()
             MaBdd.write_cve_tmp(moncve)
 
-    # On sauvegarde le tout
-    MaBdd.flush_tmp()
-    MaBdd.flush_url()
+ 
 
-#       Pour vérifier la sortie sans avoir de mise a jour :)
+#       Pour vérifier la sortie sans avoir de mise à jour :)
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 ;")
 
@@ -158,7 +164,7 @@ def mon_script():
     pbar = tqdm(total=len(rows),ascii=True,desc="Bulletin")
     for bul in rows:
         pbar.update(1)
-        logging.info(f'mise a jour de {bul[0]}')
+        logging.info(f'mise à jour de {bul[0]}')
         re_result=re.fullmatch('CERT(FR|A)\-(?P<an>\d+)\-AVI\-\d+',bul[0])
         R_out.Write_CERTFR(bul[0],re_result.group('an'))
     pbar.close()

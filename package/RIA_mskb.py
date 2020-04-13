@@ -2,11 +2,11 @@
 # @file RIA_mskb.py
 # @author Frack113
 # @date 07/04/2020
-# @brief Recherhce de CVE et KB via l'API Microsoft
+# @brief Recherche de CVE et KB via l'API Microsoft
 # @warning la clé API est dans RIA_mskb.key
 # @diafile RIA_mskb.dia
 # @todo optimiser le code
-# @todo peut être une class Wsus avec le cab http://go.microsoft.com/fwlink/?linkid=74689
+# @todo peut être une "class" Wsus avec le cab http://go.microsoft.com/fwlink/?linkid=74689
 
 import requests
 import json
@@ -28,9 +28,9 @@ class C_mskb:
     # @details Python help
     def __init__(self,MaBdd):
         """ Constructors
-        Mabdd C_sql déjà initialisée
+        Mabdd est un objet C_sql déjà initialisé
         il faut une clé API sauvegardée dans RIA_mskb.key
-        crée automatiquement les tables SQL manquantes
+        Les tables SQL manquantes sont créées automatiquement
         """
         ## la clé API
         try :
@@ -70,10 +70,10 @@ class C_mskb:
          DELETE FROM MS_Vuln;
         """)
 
-    ## recupere toutes les URL
+    ## récupère toutes les URL
     # @details Python help
     def update_all_url(self):
-        """ Recupére toutes les url à traiter
+        """ Récupère toutes les url à traiter
         """
         rep= requests.get(self.api_url,headers=self.header)
         jsontmp=json.loads(rep.text)
@@ -91,14 +91,14 @@ class C_mskb:
 
     ## sauvegarde en BDD un cve
     # @param ms_cve le CVE corrigé
-    # @param fix_id le numero de KB
+    # @param fix_id le numéro de KB
     # @param product le ProductID
-    # @param ms_url l'URL pour plusd'information
+    # @param ms_url l'URL pour plus d'informations
     # @param fix_Supercedence le KB remplacé
     # @param typekb le type de KB
     # @details Python help
     def write_cve_kb(self,ms_cve,fix_id,product,ms_url,fix_Supercedence,typekb):
-        """Ecrit en BDD les information d'une CVE MS
+        """Ecrit en BDD les informations d'une CVE MS
         """
         self.MaBdd.write_sc(f'''INSERT OR IGNORE INTO MS_Vuln VALUES("{ms_cve}",
                                                                      "{fix_id}",
@@ -107,7 +107,7 @@ class C_mskb:
                                                                      "{fix_Supercedence}",
                                                                      "{typekb}");''')
 
-    ## recupere toutes les information
+    ## récupère toutes les informations
     # @details Python help
     def update_all_info(self):
         """Vérifie toutes les pages d'informations
@@ -140,24 +140,24 @@ class C_mskb:
                         for product in kb['ProductID']:
                             self.write_cve_kb(ms_cve,fix_id,product,ms_url,fix_Supercedence,typekb)
 
-    ## Cherche les information pour un CERTFR
+    ## Cherche les informations pour un CERTFR
     # @param certfr le nom du CERTFR
-    # @todo retravailler la requete SQL
+    # @todo retravailler la requête SQL
     # @details Python help
     def get_info_certfr(self,certfr):
-        """Revoie une liste pour un nom de bulletin données
+        """Renvoie une liste pour un nom de bulletin donné
         certfr est une string avec le nom à chercher
         """
         return self.MaBdd.get_sc(f'''SELECT cve_id,Value,FIX_ID,Url,type FROM
                                           MS_vuln LEFT JOIN MS_Product ON MS_vuln.ProductID=MS_Product.ProductID 
                                           WHERE MS_vuln.cve_id IN (SELECT cve_id from CERTFR_cve WHERE BULTIN="{certfr}");''')
 
-    ## Verifie la mise a jour
-    # @param date la date "YYYYMMDD" a verifier
-    # @return String d'information
+    ## Vérifie la mise à jour
+    # @param date la date "YYYYMMDD" à vérifier
+    # @return String d'informations
     # @details Python help
     def Check_Mskb_Update(self,date):
-        """Verifie s'il y des mise à jour par API
+        """Vérifie s'il y des mises à jour par API
         """
         if self.api_key=='Manque le fichier RIA_mskb.key':
             return (self.api_key)
@@ -167,4 +167,4 @@ class C_mskb:
             else:
                 self.update_all_info()
                 self.MaBdd.set_Info_date("Microsoft",date)
-                return ("Microsoft mise à jour")
+                return ("Microsoft mis à jour")

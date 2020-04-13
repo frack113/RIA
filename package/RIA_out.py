@@ -2,7 +2,7 @@
 # @file RIA_out.py
 # @author Frack113
 # @date 09/04/2020
-# @brief Class pour les sortie fichier
+# @brief Class pour les sorties fichier
 #
 
 from  RIA_class import *
@@ -11,7 +11,7 @@ import json
 
 
 ##
-# @brief Gestion des sortie
+# @brief Gestion des sorties
 # @details Python help
 class C_out:
 
@@ -29,14 +29,14 @@ class C_out:
         self.Ksoft=Ksoft
 
     ##
-    # @brief Une jolie sortie formater des info Microsoft
+    # @brief Une jolie sortie formatée des info Microsoft
     # @param Nom le nom du bulletin
     # @param tab une liste
-    # @todo gerer la taille dynamique des collones
+    # @todo gérer la taille dynamique des colonnes
     # @details Python help
     def MS_to_STR(self,Nom,tab):
-        """ ajoute a liste tab les informations Microsoft
-        Nom string non du bulletin
+        """ ajoute à liste tab les informations Microsoft
+        Nom string avec le nom du bulletin
         """
         allcve=self.Ksoft.get_info_certfr(Nom)
         if allcve:
@@ -46,12 +46,12 @@ class C_out:
                 tab.append(f"{row[0]:^20}|{row[1]:60}|{row[2]:^15}|{row[3]:^15}|{row[4]}")
 
     ##
-    # @brief Une jolie sortie formater des info CERTFR
+    # @brief Une jolie sortie formatée des info CERTFR
     # @param Nom le nom du bulletin
     # @param tab une liste
     # @details Python help
     def CERT_to_STR(self,Nom,tab):
-        """ Ajoute a liste tab les informations CVE cpe
+        """ Ajoute à liste tab les informations CVE cpe
         Nom string nom du Bulletin
         """
         allcve=self.MaBdd.get_all_cve_certfr(Nom)
@@ -78,10 +78,10 @@ class C_out:
     ##
     # @brief Ecrit dans un fichier text les informations du bulletin
     # @param nom le nom du bulletin
-    # @param rep repertoire de sortie
+    # @param rep répertoire de sortie
     # @details Python help
     def Write_CERTFR(self,nom,rep):
-        """Ecrit les information du bulletin 'nom' dans le repertoire txt/'rep'
+        """Ecrit les informations du bulletin 'nom' dans le répertoire txt/'rep'
         """
         reponse=[]
         cert=self.MaBdd.get_certfr(nom)
@@ -99,13 +99,13 @@ class C_out:
         file.close()
 
     ##
-    # @brief Ecrit un fichiers avec bulletins et URI23 pour une recherche
-    # @param Nom dans les objets et non du fichier de sortie
-    # @param uri chaine a chercher dans les uri23
+    # @brief Ecrit un fichier avec bulletins et URI23 pour une recherche
+    # @param Nom recherche dans les objets et aussi le nom du fichier de sortie
+    # @param uri chaîne à chercher dans les uri23
     # @details Python help
     def URI_to_FILE(self,Nom,uri):
-        """ Ecrit dans un fichier tous les bulletin avec 'Nom' dans l'objet
-        et tout les uri23 SQL LIKE %uri%
+        """ Ecrit dans un fichier tous les bulletins avec 'Nom' dans l'objet
+        et toutes les uri23 SQL LIKE %uri%
         """
         tab=[]
         certs=self.MaBdd.get_orphan_by_obj(Nom)
@@ -129,12 +129,12 @@ class C_out:
         file.writelines('\n'.join(tab))
         file.close()
     ##
-    # @brief Ecrit un fichiers une liste 2 champs
+    # @brief Ecrit dans un fichier une liste à 2 champs
     # @param Nom_sortie nom du fichier
-    # @param tab la liste a ecrire
+    # @param tab la liste à ecrire
     # @details Python help
     def tab2_to_txt(self,Nom_sortie,tab):
-        """ Ecrit un fichiers txt une liste 2 champs """
+        """ Ecrit un fichier txt une liste 2 champs """
         fiche=open(Nom_sortie,'w', encoding='utf-8')
         for row in tab:
             fiche.writelines(f"{row[0]:^10}:{row[1]}\n")
@@ -143,11 +143,11 @@ class C_out:
     ##
     # @brief Export Json
     # @param Outname nom du fichier
-    # @param sql la fin de la requete
+    # @param sql la fin de la requête
     # @details Python help
     def Export_certfr_json (self,Outname,sql):
-        """Export en json tous les bulletin WHERE Non {sql} dans le fichier 'Outname'
-        en SQL:
+        """Export en json tous les bulletins requête SQL: WHERE Non {sql} dans le fichier 'Outname' 
+        Exemples :
         Un bulletin sql= '="CERTFR-2020-AVI-001"'
         les 2020    sql= 'LIKE "%2020%"'
         """
