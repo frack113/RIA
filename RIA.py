@@ -1,7 +1,7 @@
 ##Le coeur
 # @file RIA.py
 # @author Frack113
-# @date 07/04/2020
+# @date 14/04/2020
 # @brief Recherche d'Informations Automatisées
 # @todo utiliser les best practice Python
 # @todo ajouter des options en cmd --forceupdate --help ...
@@ -25,6 +25,7 @@ import requests
 import shutil
 from tqdm import tqdm
 import logging
+import argparse
 
 sys.path.append ('./package')
 from RIA_class import *
@@ -51,20 +52,19 @@ def credit():
 /\\     |_|     /\\
 | \\___/' `\\___/ |
  \_/  \\___/  \\_/
-  |\\__/   \\__/|               Version 1
+  |\\__/   \\__/|               Version 1.1
   |/  \\___/  \\|              Slow is best
  ./\\__/   \\__/\\,
  | /  \\___/  \\ |
  \\/     V     \\/
 
+    lancer "RIA.py -h" pour plus d'options
     """
     print(mon_credit)
 
-
-## Core du script
-# @brief le coeur du script
-# @todo simplifier les répétitions
-def mon_script():
+## 
+# @brief initialisation des variables
+def Init_env ():
     global MaBdd
     global Ksoft
     logging.basicConfig(filename='Update_certfr.log',
@@ -73,11 +73,6 @@ def mon_script():
                         datefmt='%m/%d/%Y %I:%M:%S %p')
     logging.info('-------------------------------------')
     logging.info('        Lancement du script')
-
-    today=datetime.datetime.now().strftime("%Y%m%d")
-
-    credit()
-
     if os.path.exists("txt"):
         pass
     else:
@@ -95,15 +90,27 @@ def mon_script():
     else:
         logging.warning('Manque le fichier de bdd initial')
         dest = shutil.copyfile('RIA_init.db','RIA.db')
-
+    
     MaBdd=C_sql()
+    
+## 
+# @brief le coeur du script
+# @todo simplifier les répétitions
+def mon_IA():
+    today=datetime.datetime.now().strftime("%Y%m%d")
+   
+    credit()
+ 
     MaBdd.clean_new()
     MaBdd.clean_tmp()
 
     if os.path.exists('RIA_mogs.txt'):
-        logging.info("Traitement de l'aide des mogs")
+        logging.info("Traitement avec l'aide des mogs")
         MaBdd.load_mogs()
 
+    if args.ForceWrapper :
+       MaBdd.Reset_Info_date()
+    
     print("Mise à jour info API Microsoft")
     Ksoft=C_mskb(MaBdd)
     reponse=Ksoft.Check_Mskb_Update(today)
@@ -113,6 +120,7 @@ def mon_script():
     print("Un peu de data mining sur le Web")
     Wrapper=C_wrapper(MaBdd)
     Wrapper.Reset_New()
+   
     Wrapper.Check_ALL_Wapper_Update(today)
     Wrapper.Flush_cve()
 
@@ -133,30 +141,29 @@ def mon_script():
     for update in updates:
         Wrapper.Load_ZIP_cve(update.Fichier)
         logging.warning(update.Fichier+ " mis à jour")
-
-    
-    # On mets à jour les informations trouvées
-    MaBdd.flush_tmp()
-    MaBdd.flush_url()
+ 
+    # On met à jour les informations trouvées
+    logging.warning("Couple URL/CVE trouvé :"+ str(Wrapper.Count_New_urlcve()))
     
     #Il y a des CVE manquantes ?
     cves=MaBdd.get_all_cve_orphan()
     if cves:
-        logging.info(str(len(cves))+" CVE non présent sur le NIST")
+        logging.info(str(len(cves))+" CVE non présente sur le NIST")
         moncve=C_cve()
         moncve.New=1
         for strcve in cves:
             moncve.id=strcve[0]
             moncve.set_crc()
             MaBdd.write_cve_tmp(moncve)
+    
+    MaBdd.flush_tmp()
+    MaBdd.flush_url()
 
- 
-
-#       Pour vérifier la sortie sans avoir de mise à jour :)
+ #       Pour vérifier la sortie sans avoir de mise à jour :)
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 WHERE nom LIKE '%2020%';")
     #MaBdd.write_sc("UPDATE CERTFR SET New=1 ;")
 
-    print("Traite les sorties")
+    print("Traitement des sorties")
     R_out=C_out(MaBdd,Ksoft)
 
     rows=MaBdd.get_all_new_certfr()
@@ -169,8 +176,9 @@ def mon_script():
         R_out.Write_CERTFR(bul[0],re_result.group('an'))
     pbar.close()
 
-    print("Le Json ...")
-    R_out.Export_certfr_json("new.json",'LIKE "%" AND New=1')
+    if args.Json:
+        print("Sortie Json ...")
+        R_out.Export_certfr_json("new.json",'LIKE "%" AND New=1')
 
     rows = MaBdd.get_all_certfr_by_cve()
     R_out.tab2_to_txt("txt/CVE_CERTFR.txt",rows)
@@ -179,7 +187,7 @@ def mon_script():
     R_out.tab2_to_txt("txt/Orphan.txt",rows)
 
 
-    if os.path.exists('RIA_uri_manual.txt'):
+    if args.Uri and os.path.exists('RIA_uri_manual.txt'):
         print ("traitement des fichiers de recherche URI manuelle")
         logging.info('Sortie pour les futurs mogs')
         file=open("RIA_uri_manual.txt")
@@ -192,11 +200,33 @@ def mon_script():
         file.close()
         pbar.close()
 
-    MaBdd.close_db()
 
+def Close_env():
+    MaBdd.close_db()
     print("Bye Bye")
     logging.info('fin de traitement')
 
+
+def affiche_etat():
+    dict=MaBdd.Get_DB_info()
+    print ("Informations de la BDD")
+    for key,values in dict.items():
+        print(f"{key:^20} : {values}")
+    
 ##
-# Brief A cause de Doxygen pour la docs
-mon_script()
+# Brief la ligne de commande
+parser = argparse.ArgumentParser(description='Les options')
+parser.add_argument('--ForceWrapper', dest='ForceWrapper',action='store_true',default=False,help='Force la mise à jour du Wrapper')
+parser.add_argument('--Etat', dest='Etat',action='store_true',default=False,help='Etat de la BDD')
+parser.add_argument('--Uri', dest='Uri',action='store_true',default=False,help='Ecrit les fichiers uri')
+parser.add_argument('--Json', dest='Json',action='store_true',default=False,help='Ecrit les fichiers json')
+args = parser.parse_args()
+
+Init_env ()
+
+if args.Etat:
+    affiche_etat()
+else:
+    mon_IA()
+
+Close_env()

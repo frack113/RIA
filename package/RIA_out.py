@@ -29,18 +29,18 @@ class C_out:
         self.Ksoft=Ksoft
 
     ##
-    # @brief Une jolie sortie formatée des info Microsoft
+    # @brief Une jolie sortie formatée des infos Microsoft
     # @param Nom le nom du bulletin
     # @param tab une liste
     # @todo gérer la taille dynamique des colonnes
     # @details Python help
-    def MS_to_STR(self,Nom,tab):
+    def MS_to_TAB(self,Nom,tab):
         """ ajoute à liste tab les informations Microsoft
         Nom string avec le nom du bulletin
         """
         allcve=self.Ksoft.get_info_certfr(Nom)
         if allcve:
-            tab.append('Microsoft info')
+            tab.append('Microsoft cve')
             tab.append("CVE"+" "*17+"|PRODUIT"+" "*53+"|KB"+" "*13+"|URL|Type")
             for row in allcve:
                 tab.append(f"{row[0]:^20}|{row[1]:60}|{row[2]:^15}|{row[3]:^15}|{row[4]}")
@@ -50,18 +50,20 @@ class C_out:
     # @param Nom le nom du bulletin
     # @param tab une liste
     # @details Python help
-    def CERT_to_STR(self,Nom,tab):
+    def CERT_to_TAB(self,Nom,tab):
         """ Ajoute à liste tab les informations CVE cpe
         Nom string nom du Bulletin
         """
         allcve=self.MaBdd.get_all_cve_certfr(Nom)
+        tab.append("Les CVE")
         if allcve:
-            tab.append(f"{'CVE':^20}|{'CVSS v3':^45}|Base V3|{'CVSS V2':^35}+|Base V2| Pubication | Modification")
+            tab.append(f"{'CVE':^20}|{'CVSS v3':^45}|Base V3|{'CVSS V2':^35}|Base V2| Pubication | Modification")
             for mycve in allcve:
                 tab.append(f"{mycve.id:20}|{mycve.cvssV3:45}|{mycve.cvssV3base:^7}|{mycve.cvssV2:35}|{mycve.cvssV2base:^7}|{mycve.dateOrigine[:10]:^12}|{mycve.dateUpdate[:10]:^12}")
             tab.append('')
         cpe_max=self.MaBdd.get_max_lg_uri_cpe(Nom)
         allcpe=self.MaBdd.get_all_cpe_certfr(Nom)
+        tab.append("Les CPE")
         if allcpe:
             tab.append(f"\t{'CVE':^20}|Conf| OPE |  Vuln |{'CPE':^{cpe_max}}| Start_incl | Start_excl |  End_incl  |  End_excl")
             test=allcpe[0].cve+'_'+str(allcpe[0].conf)+' '+allcpe[0].vulnerable
@@ -93,8 +95,9 @@ class C_out:
         reponse.append('----------------------------------------')
         reponse.append('----------- RIA By Frack113 ------------')
         reponse.append('----------------------------------------')
-        self.CERT_to_STR(nom,reponse)
-        self.MS_to_STR(nom,reponse)
+        self.CERT_to_TAB(nom,reponse)
+        reponse.append('----------- INFO Microsoft ------------')
+        self.MS_to_TAB(nom,reponse)
         file.writelines('\n'.join(reponse))
         file.close()
 

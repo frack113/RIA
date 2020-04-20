@@ -1,7 +1,7 @@
 ## La gestion de la base de données
 # @file RIA_sql.py
 # @author Frack113
-# @date 01/04/2020
+# @date 14/04/2020
 # @brief Class pour les interactions avec la Bdd
 # @details Python help
 from  RIA_class import *
@@ -138,6 +138,13 @@ class C_sql:
         self.moncur.execute(f'INSERT OR REPLACE INTO Info VALUES("{quoi}","{date}");')
 
     ##
+    # @brief remet à zéro la table information
+    # @details Python help
+    def Reset_Info_date (self):
+        """ Remet la date pour la recherche au '19750101' dans la table Info
+        """
+        self.moncur.execute("UPDATE Info SET date='19750101';")
+    ##
     # @brief efface les tables temporaires
     # @details Python help
     def clean_tmp (self):
@@ -185,7 +192,7 @@ class C_sql:
     # @param monbul un C_certfr
     # @details Python help
     def write_certfr_tmp (self,monbul):
-        """ Ecrit dans la table CERTFR_tmp un bulletin
+        """ Ecrit un bulletin dans la table CERTFR_tmp 
         Ecrit les liens dans la table CERTFR_Url
         monbul est un C_certfr
         """
@@ -238,11 +245,11 @@ class C_sql:
                                                             {moncve.New});''')
 
     ##
-    # @brief Ecrit en BDD un cpe
+    # @brief Ecrit en BDD un CPE
     # @param moncpe un C_cpe
     # @details Python help
     def write_cpe_tmp (self,moncpe):
-        """ Ecrit en BDD un cpe dans la table CVE_cpe_tmp
+        """ Ecrit en BDD un CPE dans la table CVE_cpe_tmp
         moncpe est un C_cpe
         """
         self.moncur.execute(f'''INSERT OR IGNORE INTO CVE_cpe_tmp VALUES("{moncpe.crc}",
@@ -381,6 +388,33 @@ class C_sql:
                 all_cve.append(copy.copy(moncve))
         return all_cve
 
+
+
+    ##
+    # @brief lit les N derniers bulletins en BDD
+    # @param nom
+    # @return C_certfr
+    # @details Python help
+    def Get_Last_N_certfr (self,nb):
+        """ lit les N dernier bulletins avec ROWID DESC LINIT 'NB';
+        nb est un interger
+        renvoie un C_certfr vide si pas trouvé en BDD par securité
+        """
+        monbul=C_certfr()
+        self.moncur.execute(f'SELECT * FROM (SELECT * FROM CERTFR ORDER BY ROWID DESC LIMIT {nb}) ORDER BY Nom;')
+        rows=self.moncur.fetchall()
+        for row in rows:
+            monbul.crc=row[0]
+            monbul.nom=row[1]
+            monbul.obj=row[2]
+            monbul.dateOrigine=row[3]
+            monbul.dateUpdate=row[4]
+            monbul.New=row[5]
+            monbul.file=row[6]
+            self.moncur.execute(f'SELECT Url FROM CERTFR_Url WHERE Nom="{monbul.nom}";')
+            monbul.link=self.moncur.fetchall()
+        return monbul
+        
     ##
     # @brief Taille max des uri23 d'un bulletin
     # @param certfr nom du bulletin
@@ -400,7 +434,7 @@ class C_sql:
     # @return liste de C_cpe ou None
     # @details Python help
     def get_all_cpe_certfr (self,certfr):
-        """Renvoie une liste de C_cpe pour pour un bulletin
+        """Renvoie une liste de C_cpe pour un bulletin
         certfr est une string
         """
         all_cpe=[]
@@ -426,7 +460,7 @@ class C_sql:
 
     ##
     # @brief renvoie tous les cpe pour un uri23
-    # @param uri une partie d'uri à chercher
+    # @param uri une partie de l'URI à chercher
     # @return liste de C_cpe ou None
     # @details Python help
     def get_all_cpe_uri (self,uri):
@@ -518,3 +552,25 @@ class C_sql:
             info=ligne.split(";")
             self.write_certfr_cve(info[0],info[1])
         file.close()
+
+
+    ##
+    # @brief Info de la BDD pour l'aide en ligne
+    # @details Python help
+    def Get_DB_info(self):
+        """ Récupère les informations pour l'aide
+        """
+        dict={}
+        self.moncur.execute("SELECT count(*) FROM CERTFR;")
+        dict['CERTFR']=self.moncur.fetchone()[0]
+        self.moncur.execute("SELECT count(*) FROM CVE;")
+        dict['CVE']=self.moncur.fetchone()[0]
+        self.moncur.execute("SELECT count(*) FROM CVE_cpe;")
+        dict['CPE']=self.moncur.fetchone()[0]
+        self.moncur.execute("SELECT count(*) FROM Ms_Vuln;")
+        dict['CVE Microsoft']=self.moncur.fetchone()[0]    
+        self.moncur.execute("SELECT count(*) FROM URL_info;")
+        dict['URL wrapper']=self.moncur.fetchone()[0]        
+        self.moncur.execute("SELECT DISTINCT cve_id,count(*) FROM URL_cve;")
+        dict['CVE wrapper']=self.moncur.fetchone()[1]         
+        return dict

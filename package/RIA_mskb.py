@@ -52,7 +52,7 @@ class C_mskb:
          CREATE TABLE IF NOT EXISTS MS_Product (ProductID TEXT UNIQUE NOT NULL,
                                                 Value text);
          CREATE TABLE IF NOT EXISTS MS_Vuln (cve_id TEXT,
-                                             FIX_ID TEXT UNIQUE,
+                                             FIX_ID TEXT,
                                              ProductID TEXT,
                                              URL TEXT,
                                              Supercedence TEXT,
@@ -100,12 +100,12 @@ class C_mskb:
     def write_cve_kb(self,ms_cve,fix_id,product,ms_url,fix_Supercedence,typekb):
         """Ecrit en BDD les informations d'une CVE MS
         """
-        self.MaBdd.write_sc(f'''INSERT OR IGNORE INTO MS_Vuln VALUES("{ms_cve}",
-                                                                     "{fix_id}",
-                                                                     "{product}",
-                                                                     "{ms_url}",
-                                                                     "{fix_Supercedence}",
-                                                                     "{typekb}");''')
+        self.MaBdd.moncur.execute(f'''INSERT OR IGNORE INTO MS_Vuln VALUES("{ms_cve}",
+                                                                           "{fix_id}",
+                                                                           "{product}",
+                                                                           "{ms_url}",
+                                                                           "{fix_Supercedence}",
+                                                                           "{typekb}");''')
 
     ## récupère toutes les informations
     # @details Python help
@@ -124,21 +124,25 @@ class C_mskb:
 
             if 'Vulnerability' in jsoncve:
                 for data in jsoncve['Vulnerability']:
-                    ms_cve=data['CVE']
-                for kb in data['Remediations']:
-                    if kb['Type']==2:  #2 vendor Fix
-                        fix_id=kb['Description']['Value']
-                    ms_url=''
-                    if 'URL' in kb:
-                        ms_url=kb['URL']
-                    fix_Supercedence=''
-                    if 'Supercedence' in kb:
-                        fix_Supercedence=kb['Supercedence']
-                    typekb=''
-                    if 'SubType' in kb:
-                        typekb=kb['SubType']
-                        for product in kb['ProductID']:
-                            self.write_cve_kb(ms_cve,fix_id,product,ms_url,fix_Supercedence,typekb)
+                    ms_cve=data['CVE']                     
+                    for kb in data['Remediations']:                          
+                        if kb['Type']==2 or kb['Type']==3:  #2 vendor Fix 3?? IE
+                            fix_id=kb['Description']['Value']
+                            
+                            ms_url=''
+                            if 'URL' in kb:
+                                ms_url=kb['URL']
+                        
+                            fix_Supercedence=''
+                            if 'Supercedence' in kb:
+                                fix_Supercedence=kb['Supercedence']
+                        
+                            typekb=''
+                            if 'SubType' in kb:
+                                typekb=kb['SubType']
+                        
+                            for product in kb['ProductID']:
+                                self.write_cve_kb(ms_cve,fix_id,product,ms_url,fix_Supercedence,typekb)
 
     ## Cherche les informations pour un CERTFR
     # @param certfr le nom du CERTFR
@@ -167,4 +171,5 @@ class C_mskb:
             else:
                 self.update_all_info()
                 self.MaBdd.set_Info_date("Microsoft",date)
+                self.MaBdd.save_db()
                 return ("Microsoft mis à jour")
