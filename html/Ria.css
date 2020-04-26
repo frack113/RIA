@@ -1,0 +1,195 @@
+table.cert {
+  border: 1px solid #1C6EA4;
+  background-color: #EEEEEE;
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+table.cert td, table.cert th {
+  border: 1px solid #AAAAAA;
+}
+table.cert tbody td {
+  font-size: 13px;
+}
+table.cert tr:nth-child(even) {
+  background: #D0E4F5;
+}
+table.cert thead {
+  background: #1C6EA4;
+  background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  border-bottom: 2px solid #444444;
+}
+table.cert thead th {
+  font-size: 15px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-align: center;
+  border-left: 2px solid #D0E4F5;
+}
+table.cert thead th:first-child {
+  border-left: none;
+}
+
+table.cert tfoot td {
+  font-size: 14px;
+}
+table.cert tfoot .links {
+  text-align: right;
+}
+table.cert tfoot .links a{
+  display: inline-block;
+  background: #1C6EA4;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+table.cve {
+  border: 6px solid #24943A;
+  background-color: #D4EED1;
+  width: 100%;
+  text-align: center;
+}
+table.cve td, table.cve th {
+  border: 1px solid #24943A;
+}
+table.cve tbody td {
+  font-size: 13px;
+}
+table.cve td:nth-child(even) {
+  background: #D0E4F5;
+}
+table.cve thead {
+  background: #24943A;
+  background: -moz-linear-gradient(top, #5baf6b 0%, #3a9e4d 66%, #24943A 100%);
+  background: -webkit-linear-gradient(top, #5baf6b 0%, #3a9e4d 66%, #24943A 100%);
+  background: linear-gradient(to bottom, #5baf6b 0%, #3a9e4d 66%, #24943A 100%);
+  border-bottom: 0px solid #444444;
+}
+table.cve thead th {
+  font-size: 19px;
+  font-weight: bold;
+  color: #F0F0F0;
+  text-align: center;
+  border-left: 2px solid #24943A;
+}
+table.cve thead th:first-child {
+  border-left: none;
+}
+
+table.cve tfoot td {
+  font-size: 13px;
+}
+table.cve tfoot .links {
+  text-align: right;
+}
+table.cve tfoot .links a{
+  display: inline-block;
+  background: #FFFFFF;
+  color: #24943A;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+table.cpe {
+  border: 2px solid #A40808;
+  background-color: #EEE7DB;
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+table.cpe td, table.cpe th {
+  border: 1px solid #AAAAAA;
+}
+table.cpe tbody td {
+  font-size: 13px;
+}
+table.cpe tr:nth-child(even) {
+  background: #F5C8BF;
+}
+table.cpe thead {
+  background: #A40808;
+}
+table.cpe thead th {
+  font-size: 19px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-align: center;
+  border-left: 2px solid #A40808;
+}
+table.cpe thead th:first-child {
+  border-left: none;
+}
+
+table.cpe tfoot td {
+  font-size: 13px;
+}
+table.cpe tfoot .links {
+  text-align: right;
+}
+table.cpe tfoot .links a{
+  display: inline-block;
+  background: #FFFFFF;
+  color: #A40808;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+table.mskb {
+  border: 6px solid #948473;
+  background-color: #FFE3C6;
+  width: 100%;
+  text-align: left;
+}
+table.mskb td, table.mskb th {
+  border: 1px solid #948473;
+}
+table.mskb tbody td {
+  font-size: 13px;
+}
+table.mskb thead {
+  background: #948473;
+  background: -moz-linear-gradient(top, #afa396 0%, #9e9081 66%, #948473 100%);
+  background: -webkit-linear-gradient(top, #afa396 0%, #9e9081 66%, #948473 100%);
+  background: linear-gradient(to bottom, #afa396 0%, #9e9081 66%, #948473 100%);
+}
+table.mskb thead th {
+  font-size: 17px;
+  font-weight: bold;
+  color: #F0F0F0;
+  text-align: center;
+  border-left: 2px solid #948473;
+}
+table.mskb thead th:first-child {
+  border-left: none;
+}
+
+table.mskb tfoot td {
+  font-size: 16px;
+}
+
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+  background-color: #f1f1f1;
+}
