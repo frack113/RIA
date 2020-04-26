@@ -1,20 +1,20 @@
 # RIA
-Recherche Automatisé d'information
+Recherche Automatisée d'informations
 ## But
 Apprendre le python.
 
 Jouer avec du Json,XML,API WEB,RE, Sqlite, créer une class...
 
-Completer un bulletin du CERTFR[1] avec le plus d'informations possibles
+Complèter un bulletin du CERTFR[1] avec le plus d'informations possibles
 
-Le code est donc pas propre ou bien optimisé.
+Le code n'est donc pas propre ou bien optimisé.
 
 Test sous :
 - FEDORA 31 x64, Python 3.7.6
 - WINDOWS 1903 x64, Python 3.8.1
 
 ## Actuellement
-- Télechargement automatique des CERTFR et CVE
+- Téléchargement automatique des CERTFR et CVE
 - Lecture des bulletins CERTFR depuis archive rar [1]
 - Lecture des cve depuis les json [2]
 - Gestion en SQLITE3
@@ -23,11 +23,12 @@ Test sous :
 - Ajouter de l'aide grace aux **Mogs** (ajout manuel)
 - Utilisation des Docstring PEP 257 [3]
 - Sortie en Json
+- Gestion des options cmd
+- Commandline "--help"
 
 ## Todo
 - nettoyer le code
 - Ajouter au Wrapper
-- Ajout un commandline "--force" ,""--help" ...
 - ?..
 
 ## Documentation
@@ -36,9 +37,17 @@ Test sous :
 - Textlive pour LATEX to PDF
 
 ## Dépendance PIP
-- tqdm
 - requests
 - BeautifulSoup4
+
+## Options lancement
+--Verbose			Ecrit dans le fichier log
+--ForceWrapper	 	Force la mise à jour du Wrapper
+--Info 				Information sur la BDD
+--Uri 				Ecrit les fichiers uri pour la recherche manuelle
+--Json 				Ecrit les fichiers json
+--Text				Ecrit les fichiers certfr modifiés en txt
+--Last N			Ecrit les N derniers bulletins
 
 ## Références
 [1]: https://www.cert.ssi.gouv.fr/

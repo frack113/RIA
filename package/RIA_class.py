@@ -13,9 +13,9 @@ import base64
 # @brief Manipulation des CERTFR
 # @details Python help
 class C_certfr:
-    """Class" qui représente un bulletin du CERTFR
+    """Class qui représente un bulletin du CERTFR
     """
-
+    
     ##
     # @brief The constructor.
     # @details Python help
@@ -102,7 +102,8 @@ class C_certfr:
         for zelda in self.link:
             hyrule.append(base64.b64decode(zelda).decode())
         self.link=hyrule
-
+ 
+    
 ##
 # @brief Manipulation des CVE
 # @details Python help

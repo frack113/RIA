@@ -1,7 +1,7 @@
 ##Le coeur
 # @file RIA.py
 # @author Frack113
-# @date 23/04/2020
+# @date 14/04/2020
 # @brief Recherche d'Informations Automatisées
 # @todo utiliser les best practice Python
 # @todo ajouter des options en cmd --forceupdate --help ...

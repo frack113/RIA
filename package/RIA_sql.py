@@ -324,16 +324,37 @@ class C_sql:
             DELETE FROM CVE_tmp;
         """)
 
+    ##
+    # @brief convertie un retour sql en list C_certfr
+    # @details Python help
+    def Certfr_tab_to_liste(self,tab):
+        ''' Help me'''
+        allcert=[]
+        monbul=C_certfr()
+        for row in tab:
+            monbul.crc=row[0]
+            monbul.nom=row[1]
+            monbul.obj=row[2]
+            monbul.dateOrigine=row[3]
+            monbul.dateUpdate=row[4]
+            monbul.New=row[5]
+            monbul.file=row[6]
+            self.moncur.execute(f'SELECT Url FROM CERTFR_Url WHERE Nom="{monbul.nom}";')
+            monbul.link=self.moncur.fetchall()
+            allcert.append(copy.copy(monbul))
+        return allcert
 
     ##
     # @brief Renvoie tous les bulletins mis à jour
-    # @return liste
+    # @return liste de C_certfr
     # @details Python help
     def get_all_new_certfr (self):
-        """ renvoie une liste de tous les noms de bulletins avec New=1
+        """ renvoie une liste de C_certfr de tous de bulletins avec New=1
         """
-        self.moncur.execute("SELECT Nom FROM CERTFR WHERE New=1;")
-        return self.moncur.fetchall()
+        self.moncur.execute("SELECT * FROM CERTFR WHERE New=1;")
+        allnewtab=self.moncur.fetchall()
+        return self.Certfr_tab_to_liste(allnewtab)
+
 
     ##
     # @brief lit un bulletin en BDD
@@ -388,33 +409,34 @@ class C_sql:
                 all_cve.append(copy.copy(moncve))
         return all_cve
 
-
-
+    ##
+    # @brief lit un liste de bulletins en BDD
+    # @param sql la requête SQL
+    # @return liste de C_certfr
+    # @details Python help
+    def Get_Liste_certfr (self,sql):
+        """ lit un liste de bulletins en BDD depuis la requête sql
+        sql est un string sql
+        renvoie une liste de C_certfr
+        """
+        self.moncur.execute(sql)
+        rows=self.moncur.fetchall()
+        allcert=self.Certfr_tab_to_liste(rows)
+        return allcert
+        
     ##
     # @brief lit les N derniers bulletins en BDD
     # @param nom
-    # @return C_certfr
+    # @return liste de C_certfr
     # @details Python help
     def Get_Last_N_certfr (self,nb):
         """ lit les N dernier bulletins avec ROWID DESC LINIT 'NB';
         nb est un interger
         renvoie un C_certfr vide si pas trouvé en BDD par securité
         """
-        monbul=C_certfr()
-        self.moncur.execute(f'SELECT * FROM (SELECT * FROM CERTFR ORDER BY ROWID DESC LIMIT {nb}) ORDER BY Nom;')
-        rows=self.moncur.fetchall()
-        for row in rows:
-            monbul.crc=row[0]
-            monbul.nom=row[1]
-            monbul.obj=row[2]
-            monbul.dateOrigine=row[3]
-            monbul.dateUpdate=row[4]
-            monbul.New=row[5]
-            monbul.file=row[6]
-            self.moncur.execute(f'SELECT Url FROM CERTFR_Url WHERE Nom="{monbul.nom}";')
-            monbul.link=self.moncur.fetchall()
-        return monbul
-        
+        return self.Get_Liste_certfr(f'SELECT * FROM (SELECT * FROM CERTFR ORDER BY ROWID DESC LIMIT {nb}) ORDER BY Nom;')
+ 
+    
     ##
     # @brief Taille max des uri23 d'un bulletin
     # @param certfr nom du bulletin
@@ -461,6 +483,19 @@ class C_sql:
     ##
     # @brief renvoie tous les cpe pour un uri23
     # @param uri une partie de l'URI à chercher
+    # @return liste 
+    # @details Python help
+    def get_tab_all_cpe_uri (self,uri):
+        """Renvoie une liste de liste de tous les cpe pour un uri23
+        recherche sql like %uri%
+        uri est une String
+        """
+        self.moncur.execute(f'SELECT * FROM CVE_cpe WHERE cve_id IN (SELECT DISTINCT cve_id FROM CVE_cpe WHERE cpe LIKE "%{uri}%") ORDER BY cve_id')
+        return self.moncur.fetchall()
+        
+    ##
+    # @brief renvoie tous les cpe pour un uri23
+    # @param uri une partie de l'URI à chercher
     # @return liste de C_cpe ou None
     # @details Python help
     def get_all_cpe_uri (self,uri):
@@ -470,8 +505,7 @@ class C_sql:
         """
         all_cpe=[]
         moncpe=C_cpe()
-        self.moncur.execute(f'SELECT * FROM CVE_cpe WHERE cve_id IN (SELECT DISTINCT cve_id FROM CVE_cpe WHERE cpe LIKE "%{uri}%") ORDER BY cve_id')
-        rows=self.moncur.fetchall()
+        rows=self.get_tab_all_cpe_ur(uri)
         if rows:
             for row in rows:
                 moncpe.reset()
@@ -489,6 +523,8 @@ class C_sql:
                 all_cpe.append(copy.copy(moncpe))
         return all_cpe
 
+
+        
     ##
     # @brief Les bulletins par obj sans CVE
     # @param obj chaîne à chercher
