@@ -41,13 +41,14 @@ Test sous :
 - BeautifulSoup4
 
 ## Options lancement
---Verbose			Ecrit dans le fichier log
---ForceWrapper	 	Force la mise à jour du Wrapper
---Info 				Information sur la BDD
---Uri 				Ecrit les fichiers uri pour la recherche manuelle
---Json 				Ecrit les fichiers json
---Text				Ecrit les fichiers certfr modifiés en txt
---Last N			Ecrit les N derniers bulletins
+- "--Verbose"			Ecrit dans le fichier log
+- "--ForceWrapper"	 	Force la mise à jour du Wrapper
+- "--Info" 				Information sur la BDD
+- "--Uri" 				Ecrit les fichiers uri pour la recherche manuelle
+- "--Json" 				Ecrit les fichiers json
+- "--Text"				Ecrit les fichiers certfr modifiés en txt
+- "--Last N"			Ecrit les N derniers bulletins
+- "--Year XXXX"   Ecrit les bulletins de l'année XXXX 
 
 ## Références
 [1]: https://www.cert.ssi.gouv.fr/

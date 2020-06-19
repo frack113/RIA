@@ -61,18 +61,18 @@ def credit():
     """
     print(mon_credit)
 
-## 
+##
 # @brief initialisation des variables
 def Init_env ():
     global MaBdd
     global Ksoft
-    
+
     if not os.path.exists("log"): os.mkdir("log")
     if not os.path.exists("txt"): os.mkdir("txt")
     if not os.path.exists("html"): os.mkdir("html")
     if not os.path.exists("json"): os.mkdir("json")
     if not os.path.exists("mogs"): os.mkdir("mogs")
-    
+
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
                         filename='log/Update_certfr.log',
@@ -80,26 +80,26 @@ def Init_env ():
     if not args.verbose:
         logging.basicConfig(level=logging.NOTSET)
         logging.getLogger().disabled = True
- 
+
     logging.info('-------------------------------------')
     logging.info('        Lancement du script')
-    
+
     if os.path.exists('RIA.db'):
         logging.info('RIA.db ok')
     else:
         logging.warning('Manque le fichier de bdd initial')
         dest = shutil.copyfile('RIA_init.db','RIA.db')
-    
+
     MaBdd=C_sql()
-    
-## 
+
+##
 # @brief le coeur du script
 # @todo simplifier les répétitions
 def mon_IA():
     today=datetime.datetime.now().strftime("%Y%m%d")
-   
+
     credit()
- 
+
     MaBdd.clean_new()
     MaBdd.clean_tmp()
 
@@ -109,7 +109,7 @@ def mon_IA():
 
     if args.ForceWrapper :
        MaBdd.Reset_Info_date()
-    
+
     print("Mise à jour info API Microsoft")
     Ksoft=C_mskb(MaBdd)
     reponse=Ksoft.Check_Mskb_Update(today)
@@ -119,7 +119,7 @@ def mon_IA():
     print("Un peu de data mining sur le Web")
     Wrapper=C_wrapper(MaBdd)
     Wrapper.Reset_New()
-   
+
     Wrapper.Check_ALL_Wapper_Update(today)
     Wrapper.Flush_cve()
 
@@ -140,10 +140,10 @@ def mon_IA():
     for update in updates:
         Wrapper.Load_ZIP_cve(update.Fichier)
         logging.warning(update.Fichier+ " mis à jour")
- 
+
     # On met à jour les informations trouvées
     logging.warning("Couple URL/CVE trouvé :"+ str(Wrapper.Count_New_urlcve()))
-    
+
     #Il y a des CVE manquantes ?
     cves=MaBdd.get_all_cve_orphan()
     if cves:
@@ -154,7 +154,7 @@ def mon_IA():
             moncve.id=strcve[0]
             moncve.set_crc()
             MaBdd.write_cve_tmp(moncve)
-    
+
     MaBdd.flush_tmp()
     MaBdd.flush_url()
 
@@ -171,14 +171,19 @@ def mon_IA():
         logging.info("Get_all_new_certfr :"+str(len(allnews)))
         if args.Text: R_out.Write_certfr_txt(allnews)
         R_out.Write_certfr_html(allnews,fileout+"_news_certfr.html")
-        
+
     if args.Last>0:
         print (f"Export les {args.Last} derniers bulletins")
         liste=MaBdd.Get_Last_N_certfr(args.Last)
         if args.Json: R_out.Write_certfr_json(liste,fileout+"_last.json")
         if args.Text: R_out.Write_certfr_txt(liste,"Last")
         R_out.Write_certfr_html(liste,fileout+"_last.html")
-        
+
+    if args.Year>0:
+        print (f"Export l'annee {args.Year}")
+        liste=MaBdd.Get_year_certfr(args.Year)
+        R_out.Write_certfr_html(liste,fileout+"_"+str(args.Year)+"_last.html")
+
     if args.Json:
         print("Sortie Json ...")
         R_out.Export_certfr_json(fileout+"_new.json",'LIKE "%" AND New=1')
@@ -212,7 +217,7 @@ def affiche_etat():
     print ("Informations de la BDD")
     for key,values in dict.items():
         print(f"{key:^20} : {values}")
-    
+
 ##
 # Brief la ligne de commande
 parser = argparse.ArgumentParser(description='Les options')
@@ -223,6 +228,7 @@ parser.add_argument('-u','--Uri',  dest='Uri' ,action='store_true',default=False
 parser.add_argument('-j','--Json', dest='Json',action='store_true',default=False,help='Ecrit les fichiers json')
 parser.add_argument('-t','--Text', dest='Text',action='store_true',default=False,help='Ecrit les fichiers txt')
 parser.add_argument('-l','--Last', dest='Last',type=int,default=0,help='les derniers Last bulletins')
+parser.add_argument('-y','--year', dest='Year',type=int,default=0,help='sortie pour annee xxxx')
 
 args = parser.parse_args()
 
