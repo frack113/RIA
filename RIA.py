@@ -182,7 +182,7 @@ def mon_IA():
     if args.Year>0:
         print (f"Export l'annee {args.Year}")
         liste=MaBdd.Get_year_certfr(args.Year)
-        R_out.Write_certfr_html(liste,fileout+"_"+str(args.Year)+"_last.html")
+        R_out.Write_certfr_html(liste,fileout+"_"+str(args.Year)+".html")
 
     if args.Json:
         print("Sortie Json ...")

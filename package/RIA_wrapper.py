@@ -674,14 +674,14 @@ class C_wrapper:
             self.Check_Gitlab()
             self.MaBdd.set_Info_date("Gitlab",date)
         self.mylog.info("Gitlab : " + str(self.Count_New_urlinfo("Gitlab")))
-       
+        '''
         if self.MaBdd.get_Info_date("Ubuntu")== date:
             pass
         else:
             self.Check_Ubuntu()
             self.MaBdd.set_Info_date("Ubuntu",date)
         self.mylog.info("Ubuntu : "+ str(self.Count_New_urlinfo("Ubuntu")))
-        
+        '''
         if self.MaBdd.get_Info_date("Kaspersky")== date:
             pass
         else:
